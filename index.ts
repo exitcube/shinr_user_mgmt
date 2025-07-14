@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { buildApp } from './app';
 
 async function start() {
@@ -13,3 +14,6 @@ async function start() {
 }
 
 start();
+=======
+ 
+>>>>>>> Stashed changes
