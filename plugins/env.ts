@@ -1,39 +1,19 @@
-// src/plugins/env.ts
-import fp from 'fastify-plugin';
-import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
+import dotenv from "dotenv";
+import path from "path";
 
-const nodeEnv = process.env.NODE_ENV || 'development';
+const isProduction = process.env.NODE_ENV === "production";
 
-function loadEnvFile() {
-  // Only load .env files in non-production
-  if (nodeEnv === 'production') return;
-
-  const envFile = path.resolve(process.cwd(), `.env.${nodeEnv}`);
-  if (fs.existsSync(envFile)) {
-    dotenv.config({ path: envFile });
-    console.log(`Loaded env file: .env.${nodeEnv}`);
-  } else {
-    console.warn(`Missing env file: .env.${nodeEnv}`);
-  }
+if (!isProduction) {
+  dotenv.config(); // Load .env
+  const envFile = `.env/.env.${process.env.NODE_ENV || "development"}`;
+  dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+  console.log(`Loaded env file: ${envFile}`);
+} else {
+  console.log("Running in production, using environment variables from process.env (e.g. PM2)");
 }
 
-// Load environment file dynamically
-loadEnvFile();
-
-export default fp(async (fastify) => {
-  const config = {
-    port: Number(process.env.PORT) || 3000,
-    nodeEnv,
-    appName: process.env.APP_NAME || 'FastifyApp',
-  };
-
-  // Validate essential envs (optional)
-  if (!process.env.PORT) {
-    fastify.log.warn('⚠️ PORT is not set. Using default 3000.');
-  }
-
-  // Attach config to Fastify instance
-  fastify.decorate('config', config);
-});
+export const ENV = {
+  NODE_ENV: process.env.NODE_ENV || "development",
+  PORT: parseInt(process.env.PORT || "3000", 10),
+  DB_URL: process.env.DB_URL || "no-db-url-provided"
+};

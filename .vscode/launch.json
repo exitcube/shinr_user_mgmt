@@ -7,8 +7,10 @@
       "name": "Run Compiled JS",
       "program": "${workspaceFolder}/dist/index.js",
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "envFile": "${workspaceFolder}/.env/.env.development",
       "sourceMaps": true,
-      "preLaunchTask": "tsc: build - tsconfig.json"
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
