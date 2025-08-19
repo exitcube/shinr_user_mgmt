@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+
 import { buildApp } from './app';
 import { ENV } from "./plugins/env";
 async function start() {
@@ -14,6 +14,6 @@ async function start() {
 }
 
 start();
-=======
+
  
->>>>>>> Stashed changes
+
