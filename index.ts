@@ -13,7 +13,11 @@ async function start() {
   }
 }
 
-start();
+// Call start and handle any errors
+start().catch((error) => {
+  console.error('❌ Startup failed:', error);
+  process.exit(1);
+});
 
  
 
