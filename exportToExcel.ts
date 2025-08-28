@@ -25,6 +25,13 @@ export type ExportOptions = {
 	fileName?: string;
 };
 
+export type ExportResult = {
+	buffer: Buffer;
+	fileName?: string;
+	mimeType: string;
+	size: number;
+};
+
 function getValueByPath(source: any, path: string): any {
 	if (source == null) return undefined;
 	if (!path) return undefined;
@@ -78,7 +85,7 @@ export async function exportToExcel<RowType = any>(
 	rows: RowType[],
 	mapping: Mapping<RowType>,
 	options: ExportOptions = {}
-): Promise<Buffer> {
+): Promise<ExportResult> {
 	const { sheetName = 'Sheet1', includeHeader = true, autoWidth = true } = options;
 
 	const normalized = normalizeColumns(columns);
@@ -125,10 +132,14 @@ export async function exportToExcel<RowType = any>(
 	XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
 	const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-	if (options.fileName) {
-		await fs.writeFile(options.fileName, wbout as Buffer);
-	}
-	return wbout as Buffer;
+	const buffer = wbout as Buffer;
+	const result: ExportResult = {
+		buffer,
+		mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		size: buffer.byteLength,
+		...(options.fileName ? { fileName: options.fileName } : {}),
+	};
+	return result;
 }
 
 export default exportToExcel;
