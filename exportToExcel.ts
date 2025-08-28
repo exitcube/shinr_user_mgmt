@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { promises as fs } from 'fs';
 
 export type ColumnFormatter = (value: any, row: any) => string;
 
@@ -21,6 +22,7 @@ export type ExportOptions = {
 	sheetName?: string;
 	includeHeader?: boolean;
 	autoWidth?: boolean;
+	fileName?: string;
 };
 
 function getValueByPath(source: any, path: string): any {
