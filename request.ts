@@ -1,108 +1,116 @@
-import axios, { type RawAxiosRequestHeaders } from "axios";
-
-
-const BASE_URL = "https://jsonplaceholder.typicode.com";
+import axios, { type RawAxiosRequestHeaders, type AxiosRequestConfig } from "axios";
 
 interface GetRequestOptions {
   endpoint: string;
   query?: Record<string, any>;
   headers?: RawAxiosRequestHeaders;
+  baseURL?: string;
 }
 
 interface PostPutRequestOptions {
   endpoint: string;
   body?: Record<string, any>;
   headers?: RawAxiosRequestHeaders;
+  baseURL?: string;
 }
 
 interface DeleteRequestOptions {
   endpoint: string;
   headers?: RawAxiosRequestHeaders;
+  baseURL?: string;
 }
 
 // ---------------- GET ----------------
-export const getRequest = async ({ endpoint, query = {}, headers = {} }: GetRequestOptions): Promise<any> => {
+export async function getRequest({ endpoint, query = {}, headers = {}, baseURL }: GetRequestOptions): Promise<{ data: any; status: number; headers: Record<string, unknown> }> {
   try {
-    const api = axios.create({
-      baseURL: BASE_URL,
-      timeout: 5000,
-      headers: { "Content-Type": "application/json", ...headers },
-    });
-
-    const response = await api.request({
+    const config: AxiosRequestConfig = {
       method: "GET",
       url: endpoint,
+      headers: { "Content-Type": "application/json", ...headers },
       params: query,
-    });
+      ...(baseURL ? { baseURL } : {}),
+    };
 
-    return response.data;
+    const response = await axios.request(config);
+
+    return {
+      data: response.data,
+      status: response.status,
+      headers: response.headers as unknown as Record<string, unknown>,
+    };
   } catch (error: any) {
     console.error(`GET ${endpoint} failed:`, error.message);
     throw error;
   }
-};
+}
 
 // ---------------- POST ----------------
-export const postRequest = async ({ endpoint, body = {}, headers = {} }: PostPutRequestOptions): Promise<any> => {
+export async function postRequest({ endpoint, body = {}, headers = {}, baseURL }: PostPutRequestOptions): Promise<{ data: any; status: number; headers: Record<string, unknown> }> {
   try {
-    const api = axios.create({
-      baseURL: BASE_URL,
-      timeout: 5000,
-      headers: { "Content-Type": "application/json", ...headers },
-    });
-
-    const response = await api.request({
+    const config: AxiosRequestConfig = {
       method: "POST",
       url: endpoint,
+      headers: { "Content-Type": "application/json", ...headers },
       data: body,
-    });
+      ...(baseURL ? { baseURL } : {}),
+    };
 
-    return response.data;
+    const response = await axios.request(config);
+
+    return {
+      data: response.data,
+      status: response.status,
+      headers: response.headers as unknown as Record<string, unknown>,
+    };
   } catch (error: any) {
     console.error(`POST ${endpoint} failed:`, error.message);
     throw error;
   }
-};
+}
 
 // ---------------- PUT ----------------
-export const putRequest = async ({ endpoint, body = {}, headers = {} }: PostPutRequestOptions): Promise<any> => {
+export async function putRequest({ endpoint, body = {}, headers = {}, baseURL }: PostPutRequestOptions): Promise<{ data: any; status: number; headers: Record<string, unknown> }> {
   try {
-    const api = axios.create({
-      baseURL: BASE_URL,
-      timeout: 5000,
-      headers: { "Content-Type": "application/json", ...headers },
-    });
-
-    const response = await api.request({
+    const config: AxiosRequestConfig = {
       method: "PUT",
       url: endpoint,
+      headers: { "Content-Type": "application/json", ...headers },
       data: body,
-    });
+      ...(baseURL ? { baseURL } : {}),
+    };
 
-    return response.data;
+    const response = await axios.request(config);
+
+    return {
+      data: response.data,
+      status: response.status,
+      headers: response.headers as unknown as Record<string, unknown>,
+    };
   } catch (error: any) {
     console.error(`PUT ${endpoint} failed:`, error.message);
     throw error;
   }
-};
+}
 
-// ---------------- Generic DELETE ----------------
-export const deleteRequest = async ({ endpoint, headers = {} }: DeleteRequestOptions): Promise<any> => {
+// ---------------- DELETE ----------------
+export async function deleteRequest({ endpoint, headers = {}, baseURL }: DeleteRequestOptions): Promise<{ data: any; status: number; headers: Record<string, unknown> }> {
   try {
-    const api = axios.create({
-      baseURL: BASE_URL,
-      timeout: 5000,
-      headers: { "Content-Type": "application/json", ...headers },
-    });
-
-    const response = await api.request({
+    const config: AxiosRequestConfig = {
       method: "DELETE",
       url: endpoint,
-    });
+      headers: { "Content-Type": "application/json", ...headers },
+      ...(baseURL ? { baseURL } : {}),
+    };
 
-    return response.data;
+    const response = await axios.request(config);
+
+    return {
+      data: response.data,
+      status: response.status,
+      headers: response.headers as unknown as Record<string, unknown>,
+    };
   } catch (error: any) {
     console.error(`DELETE ${endpoint} failed:`, error.message);
     throw error;
   }
-};
+}
