@@ -115,7 +115,7 @@ export async function exportToExcel<RowType = any>(
 
 	const worksheet = XLSX.utils.aoa_to_sheet(aoa);
 
-	// Auto width
+	// Auto width//razeeem
 	if (autoWidth) {
 		const widths = computeAutoWidths(aoa);
 		(worksheet as any)['!cols'] = widths.map((wch) => ({ wch }));
