@@ -125,6 +125,9 @@ export async function exportToExcel<RowType = any>(
 	XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
 	const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+	if (options.fileName) {
+		await fs.writeFile(options.fileName, wbout as Buffer);
+	}
 	return wbout as Buffer;
 }
 
