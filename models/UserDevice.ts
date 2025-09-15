@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from './User';
 
-@Entity('userOtp')
-export class UserOtp {
+@Entity('userDevice')
+export class UserDevice {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
@@ -14,20 +14,24 @@ export class UserOtp {
     @JoinColumn({ name: 'userId' })
     user: User;
 
-    @Column()
-    otp: string;
-
-    @Column()
-    otpToken: string;
+    @Column({ type: 'timestamp' })
+    lastLogin: Date;
 
     @Column({ type: 'timestamp' })
-    lastRequestedTime: Date;
+    lastActive: Date;
 
-    @Column({ type: 'smallint', default: 0 })
-    requestCount: number;
+    @Column()
+    userAgent: string;
+
+    @Column({ type: 'timestamp' })
+    lastLogoutTime: Date;
+
+    @Column()
+    ipAddress: string;
 
     @Column({ default: true })
     isActive: boolean;
+
 
     @CreateDateColumn()
     createdAt: Date;
