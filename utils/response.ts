@@ -8,7 +8,7 @@ export function getPaginationParams(
     limit: string = '10'
 ): { offset: number; limit: number; page: number } {
     const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+    const limitNum = Math.max(1, parseInt(limit) || 10);
     const offset = (pageNum - 1) * limitNum;
 
     return {
