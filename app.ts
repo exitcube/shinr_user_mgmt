@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import typeormPlugin from './plugins/typeorm';
 import errorHandlerPlugin from './plugins/errorHandler';
-import rootRoute from './routes/root';
+import routes from './routes/root';
 
 
 
@@ -16,7 +16,7 @@ export async function buildApp() {
  
   
   // Register routes
-  await fastify.register(rootRoute);
+  await fastify.register(routes);
 
 
   return fastify;

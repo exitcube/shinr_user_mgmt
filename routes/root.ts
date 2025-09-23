@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
+import loginRoutes from '../login/routes';
 
-export default async function rootRoute(
+export default async function routes(
   fastify: FastifyInstance,
   opts: FastifyPluginOptions
 ){
@@ -10,6 +11,7 @@ export default async function rootRoute(
       environment: process.env.NODE_ENV || 'development',
     };
   });
+  fastify.register(loginRoutes, { prefix: '/user' });
 }
 
 

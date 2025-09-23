@@ -20,7 +20,7 @@ export function validatePayload(schema: Joi.ObjectSchema, data: any): Validation
   return { success: true };
 }
 
-export function validationPreHandler(schemaMap: { body?: Joi.ObjectSchema; query?: Joi.ObjectSchema }) {
+export function validation(schemaMap: { body?: Joi.ObjectSchema; query?: Joi.ObjectSchema }) {
   return async function (request: any, reply: any) {
     if (schemaMap.body) {
       const result = validatePayload(schemaMap.body, request.body);
