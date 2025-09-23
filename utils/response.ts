@@ -1,4 +1,4 @@
-import {ErrorResponse} from '../types/errors';
+import {ErrorResponse, ErrorBody} from '../types/errors';
 
 /**
  * Handle pagination parameters
@@ -52,7 +52,7 @@ export function createPaginatedResponse(
     };
 }
 
-export function createErrorResponse(error: ErrorResponse, message?: string) {
+export function createErrorResponse(error: ErrorBody, message?: string) : ErrorResponse {
     return {
         success: false,
         error,

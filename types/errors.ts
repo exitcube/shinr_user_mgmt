@@ -82,7 +82,10 @@ export interface ErrorResponse {
     path?: string;
     method?: string;
   };
+  message?: string;
 }
+
+export type ErrorBody = ErrorResponse['error'];
 
 // Error codes enum
 export enum ErrorCodes {
