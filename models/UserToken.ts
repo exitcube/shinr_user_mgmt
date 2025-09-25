@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, Generated } from 'typeorm';
 import { User } from './User';
 import { UserDevice } from './UserDevice';
 
@@ -6,8 +6,12 @@ import { UserDevice } from './UserDevice';
 
 @Entity('userToken')
 export class UserToken {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+    @PrimaryGeneratedColumn()
+    id: number; // internal auto-increment id (good for sorting)
+
+    @Column()
+    @Generated('uuid')
+    uuid: string; // external unique identifier (safe for exposure)
 
     @Column({ name: 'userId' })
     @Index()

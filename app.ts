@@ -17,7 +17,7 @@ export async function buildApp() {
   
   // Register routes
   await fastify.register(routes);
-
+// add the comment to verify the jwt secret keys are present or not else it should not runt eh code
 
   return fastify;
 }

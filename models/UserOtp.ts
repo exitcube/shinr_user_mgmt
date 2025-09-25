@@ -1,10 +1,25 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    UpdateDateColumn,
+    Index,
+    ManyToOne,
+    JoinColumn,
+    Generated
+} from 'typeorm';
 import { User } from './User';
+import { UserDevice } from './UserDevice';
 
 @Entity('userOtp')
 export class UserOtp {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+    @PrimaryGeneratedColumn()
+    id: number; // internal auto-increment id (good for sorting)
+
+    @Column()
+    @Generated('uuid')
+    uuid: string; // external unique identifier (safe for exposure)
 
     @Column({ name: 'userId' })
     @Index()
@@ -13,6 +28,14 @@ export class UserOtp {
     @ManyToOne(() => User)
     @JoinColumn({ name: 'userId' })
     user: User;
+
+    @Column({ name: 'deviceId' })
+    @Index()
+    deviceId: string;
+
+    @ManyToOne(() => UserDevice)
+    @JoinColumn({ name: 'deviceId' })
+    device: UserDevice;
 
     @Column()
     otp: string;
@@ -34,10 +57,4 @@ export class UserOtp {
 
     @UpdateDateColumn()
     updatedAt: Date;
-
-
 }
-
-
-
-

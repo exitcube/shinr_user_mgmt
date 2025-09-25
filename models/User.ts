@@ -1,17 +1,29 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import { 
+    Entity, 
+    PrimaryGeneratedColumn, 
+    Column, 
+    CreateDateColumn, 
+    UpdateDateColumn, 
+    Index, 
+    Generated 
+} from 'typeorm';
 
-@Entity('user')
+@Entity('users')
 export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+    @PrimaryGeneratedColumn()
+    id: number; // internal auto-increment id (good for sorting)
+
+    @Column()
+    @Generated('uuid')
+    uuid: string; // external unique identifier (safe for exposure)
 
     @Column({ nullable: true })
     name: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, unique: true })
     email: string;
 
-    @Column({ unique: true })
+    @Column({ unique: true, nullable: false })
     @Index()
     mobile: string;
 

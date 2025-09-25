@@ -13,7 +13,7 @@ This folder contains all TypeORM entities for the application.
 1. Create a new entity file (e.g., `Product.ts`)
 2. Import the entity in `index.ts`
 3. Add it to the `entities` array in `index.ts`
-4. run this command to generate :  npm run migration:generate -- migrations/MigrationName
+4. run this command to generate :  npm run migration:generate -- migrations/migrationFileName
 5. run this command to migrate the changes to db : npm run migration:run
 6. to revert the last migration run npm run migration:revert
 7. If the enotyt belongs to this migration please add it into `ownedEntities` in model.

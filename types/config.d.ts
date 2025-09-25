@@ -10,3 +10,9 @@ declare module 'fastify' {
     };
   }
 }
+
+export type otpTokenPayloadType = {
+  userId: string;
+  userUUId : string;
+  deviceId: string;
+}
