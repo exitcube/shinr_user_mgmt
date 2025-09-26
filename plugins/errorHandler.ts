@@ -45,7 +45,8 @@ const errorHandlerPlugin: FastifyPluginAsync = async (fastify) => {
           timestamp: timestamp,
           path: path,
           method: method
-        }
+        },
+        message: error.publicMessage
       };
 
       return reply.status(error.statusCode).send(errorResponse);

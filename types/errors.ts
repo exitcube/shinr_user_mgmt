@@ -3,17 +3,20 @@ export class APIError extends Error {
   public statusCode: number;
   public isOperational: boolean;
   public code?: string;
+  public publicMessage : string;
 
   constructor(
     message: string,
     statusCode: number = 500,
     code?: string,
-    isOperational: boolean = true
+    isOperational: boolean = true,
+    publicMessage : string = 'An unexpected error occurred'
   ) {
     super(message);
     this.statusCode = statusCode;
     this.code = code;
     this.isOperational = isOperational;
+    this.publicMessage = publicMessage;
     
     // Maintains proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {

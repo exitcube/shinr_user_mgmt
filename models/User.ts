@@ -1,12 +1,14 @@
-import { 
-    Entity, 
-    PrimaryGeneratedColumn, 
-    Column, 
-    CreateDateColumn, 
-    UpdateDateColumn, 
-    Index, 
-    Generated 
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    UpdateDateColumn,
+    Index,
+    Generated,
+    OneToOne
 } from 'typeorm';
+import { UserDevice } from '../models';
 
 @Entity('users')
 export class User {
@@ -38,4 +40,7 @@ export class User {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @OneToOne(() => UserDevice, device => device.user)
+    device: UserDevice;
 }

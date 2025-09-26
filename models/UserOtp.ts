@@ -23,7 +23,7 @@ export class UserOtp {
 
     @Column({ name: 'userId' })
     @Index()
-    userId: string;
+    userId: number;
 
     @ManyToOne(() => User)
     @JoinColumn({ name: 'userId' })
@@ -31,7 +31,7 @@ export class UserOtp {
 
     @Column({ name: 'deviceId' })
     @Index()
-    deviceId: string;
+    deviceId: number;
 
     @ManyToOne(() => UserDevice)
     @JoinColumn({ name: 'deviceId' })

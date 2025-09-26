@@ -1,3 +1,7 @@
 export type LoginRequestBody = {
-  mobile: string;
+  mobile : string;
+};
+export type verifyOtpRequestBody = {
+  otpToken: string;
+  otp: string;
 };

@@ -5,15 +5,11 @@ import controller from './handler-shayiz';
 
 export default async function loginRoutes(fastify: FastifyInstance, opts: FastifyPluginOptions) {
 	const handler = controller(fastify, opts);
-	fastify.post('/login/otp', {
-		preHandler: [validation(loginValidate)]
+	fastify.get('/user/details', {
+		preHandler: []
 	},
-		handler.generateOtpHandler);
+		handler.writelater);
 
-	fastify.post('/login/verify-otp', {
-		preHandler: [validation(verifyOtpValidate)]
-	},
-		handler.verifyOtpHandler);
 
 
 

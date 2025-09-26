@@ -15,19 +15,19 @@ export class UserToken {
 
     @Column({ name: 'userId' })
     @Index()
-    userId: string;
+    userId: number;
 
     @ManyToOne(() => User)
     @JoinColumn({ name: 'userId' })
     user: User;
 
-    @Column({ name: 'deviceId', nullable: true })
+    @Column({ name: 'deviceId', nullable: false })
     @Index()
-    deviceId: string;
+    deviceId: number;
 
-    @ManyToOne(() => UserDevice, { nullable: true })
+    @ManyToOne(() => UserDevice, { nullable: false })
     @JoinColumn({ name: 'deviceId' })
-    device: UserDevice | null;
+    device: UserDevice;
 
     @Column({ type: 'text' })
     refreshToken: string;

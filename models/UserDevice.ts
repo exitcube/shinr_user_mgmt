@@ -13,7 +13,7 @@ export class UserDevice {
 
     @Column({ name: 'userId' })
     @Index()
-    userId: string;
+    userId: number;
 
     @ManyToOne(() => User)
     @JoinColumn({ name: 'userId' })
