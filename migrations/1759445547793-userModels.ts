@@ -1,10 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UserModels1758916431569 implements MigrationInterface {
-    name = 'UserModels1758916431569'
+export class UserModels1759445547793 implements MigrationInterface {
+    name = 'UserModels1759445547793'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "users" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying, "email" character varying, "mobile" character varying NOT NULL, "isActive" boolean NOT NULL DEFAULT false, "lastActive" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "UQ_d376a9f93bba651f32a2c03a7d3" UNIQUE ("mobile"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_951b8f1dfc94ac1d0301a14b7e" ON "users" ("uuid") `);
         await queryRunner.query(`CREATE INDEX "IDX_d376a9f93bba651f32a2c03a7d" ON "users" ("mobile") `);
         await queryRunner.query(`CREATE TABLE "userDevice" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(), "userId" integer NOT NULL, "lastLogin" TIMESTAMP, "lastActive" TIMESTAMP, "userAgent" character varying, "lastLogoutTime" TIMESTAMP, "ipAddress" character varying, "isActive" boolean NOT NULL DEFAULT true, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_7d9d56d85466ed4356ea156d5cb" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_6b195c4ce27d73366cef2c4b54" ON "userDevice" ("uuid") `);
@@ -38,6 +39,7 @@ export class UserModels1758916431569 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_6b195c4ce27d73366cef2c4b54"`);
         await queryRunner.query(`DROP TABLE "userDevice"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_d376a9f93bba651f32a2c03a7d"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_951b8f1dfc94ac1d0301a14b7e"`);
         await queryRunner.query(`DROP TABLE "users"`);
     }
 
