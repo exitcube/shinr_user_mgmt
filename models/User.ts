@@ -17,6 +17,7 @@ export class User {
 
     @Column()
     @Generated('uuid')
+    @Index()
     uuid: string; // external unique identifier (safe for exposure)
 
     @Column({ nullable: true })

@@ -12,14 +12,13 @@ declare module 'fastify' {
 }
 
 export type otpTokenPayloadType = {
-  userId: number;
   userUUId : string;
   deviceUUId: string;
 }
 
 
 export type refreshTokenPayloadType = {
-  userId: number;
+  tokenId: number;
   userUUId : string;
   deviceUUId: string;
 }
@@ -29,4 +28,43 @@ export type accessTokenPayloadType = {
   userUUId : string;
   deviceUUId: string;
   mobile : string;
+}
+
+// Define interfaces for the return types
+export interface UserInfo {
+  id: number;
+  uuid: string;
+  name: string;
+  email: string;
+  mobile: string;
+  isActive: boolean;
+  lastActive: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DeviceInfo {
+  id: number;
+  uuid: string;
+  userId: number;
+  lastLogin: Date;
+  lastActive: Date;
+  userAgent: string;
+  lastLogoutTime: Date;
+  ipAddress: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserDeviceData {
+  user: UserInfo | null;
+  device: DeviceInfo | null;
+}
+
+export interface AuthenticatedUser {
+  userId: number;
+  userUUId: string;
+  deviceUUId: string;
+  mobile: string;
 }

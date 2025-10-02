@@ -13,6 +13,7 @@ export async function buildApp() {
   // Register plugins
   await fastify.register(typeormPlugin);
   await fastify.register(errorHandlerPlugin);
+
  
   
   // Register routes
