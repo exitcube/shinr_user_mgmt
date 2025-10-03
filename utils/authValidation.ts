@@ -99,9 +99,9 @@ export async function authValidationPreHandler(
                 errorMessage = 'Invalid token format';
                 publicMessage = 'The provided token is malformed or invalid';
             } else if (jwtError.code === 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED') {
-                errorCode = 'INVALID_TOKEN_SIGNATURE';
+                errorCode = 'INVALID_TOKEN';
                 errorMessage = 'Invalid token signature';
-                publicMessage = 'The provided token signature is invalid';
+                publicMessage = 'The provided token is invalid';
             }
 
             const errorResponse = createErrorResponse({
