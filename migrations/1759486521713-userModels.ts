@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UserModels1759445547793 implements MigrationInterface {
-    name = 'UserModels1759445547793'
+export class UserModels1759486521713 implements MigrationInterface {
+    name = 'UserModels1759486521713'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "users" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying, "email" character varying, "mobile" character varying NOT NULL, "isActive" boolean NOT NULL DEFAULT false, "lastActive" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "UQ_d376a9f93bba651f32a2c03a7d3" UNIQUE ("mobile"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`);
@@ -20,11 +20,9 @@ export class UserModels1759445547793 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "userOtp" ADD CONSTRAINT "FK_f9005f69a93cc20f32bd0ce1145" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "userOtp" ADD CONSTRAINT "FK_dbe33a676c9935082befb09f695" FOREIGN KEY ("deviceId") REFERENCES "userDevice"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "userToken" ADD CONSTRAINT "FK_002c4d6b032daf6b513e1a4cd8f" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "userToken" ADD CONSTRAINT "FK_ed220e4533fb012a59ce1bd7f58" FOREIGN KEY ("deviceId") REFERENCES "userDevice"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "userToken" DROP CONSTRAINT "FK_ed220e4533fb012a59ce1bd7f58"`);
         await queryRunner.query(`ALTER TABLE "userToken" DROP CONSTRAINT "FK_002c4d6b032daf6b513e1a4cd8f"`);
         await queryRunner.query(`ALTER TABLE "userOtp" DROP CONSTRAINT "FK_dbe33a676c9935082befb09f695"`);
         await queryRunner.query(`ALTER TABLE "userOtp" DROP CONSTRAINT "FK_f9005f69a93cc20f32bd0ce1145"`);

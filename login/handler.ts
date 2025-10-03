@@ -35,9 +35,10 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     where: { userId: user.id, isActive: true },
                 });
                 if (existingDevice) {
+                    await deviceRepo.remove(existingDevice);
                     await userOtpRepo.delete({ userId: user.id, deviceId: existingDevice.id });
                     await userTokenRepo.update({ userId: user.id, deviceId: existingDevice.id }, { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE });
-                    await deviceRepo.remove(existingDevice);
+
                 }
 
 
@@ -99,7 +100,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 const payload = await verifyOtpToken(otpToken);
                 console.log("payload", payload);
                 const user = await userRepo.findOne({
-                    where: {  uuid: payload.userUUId, isActive: true },
+                    where: { uuid: payload.userUUId, isActive: true },
                     relations: ['device']
                 });
                 if (!user) {
@@ -146,11 +147,13 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     deviceId: user.device.id,
                     refreshTokenStatus: RefreshTokenStatus.ACTIVE,
                     isActive: true,
+                    refreshToken: "",
+                    accessToken: ""
                 });
 
                 await userTokenRepo.save(userToken);
 
-                const refreshToken = await generateRefreshToken({  userUUId: user.uuid, deviceUUId: user.device.uuid ,tokenId: userToken.id});
+                const refreshToken = await generateRefreshToken({ userUUId: user.uuid, deviceUUId: user.device.uuid, tokenId: userToken.id });
                 const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid, mobile: user.mobile });
                 console.log(refreshToken, accessToken);
                 const refreshTokenExpiry = new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "60") * 24 * 60 * 60 * 1000);

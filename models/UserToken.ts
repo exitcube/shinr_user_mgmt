@@ -25,9 +25,9 @@ export class UserToken {
     @Index()
     deviceId: number;
 
-    @ManyToOne(() => UserDevice, { nullable: false })
-    @JoinColumn({ name: 'deviceId' })
-    device: UserDevice;
+    // @ManyToOne(() => UserDevice, { nullable: false })
+    // @JoinColumn({ name: 'deviceId' })
+    // device: UserDevice;
 
     @Column({ type: 'text' })
     refreshToken: string;
