@@ -15,8 +15,9 @@ export default async function loginRoutes(fastify: FastifyInstance, opts: Fastif
 	},
 		handler.verifyOtpHandler);
 
-
+	fastify.post('/logout', {}, handler.logoutHandler);
 
 }
+
 
 
