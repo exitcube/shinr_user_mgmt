@@ -32,13 +32,13 @@ export class UserToken {
     @Column({ type: 'text' })
     refreshToken: string;
 
-    @Column({ unique: true })
+    @Column()
     accessToken: string;
 
     @Column({ type: 'timestamp', nullable: true })
     refreshTokenExpiry: Date | null;
 
-    @Column({ unique: true })
+    @Column()
     refreshTokenStatus: string;
 
     @Column({ default: false })
