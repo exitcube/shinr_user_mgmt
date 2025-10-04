@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { LoginRequestBody, verifyOtpRequestBody } from './type';
+import { LoginRequestBody, verifyOtpRequestBody, LogoutRequestBody } from './type';
 import { generateOtpToken, generateRefreshToken, signAccessToken, verifyOtpToken } from '../utils/jwt';
 import { generateOtp } from '../utils/helper';
 import { createSuccessResponse } from '../utils/response';
@@ -175,6 +175,93 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     (error as APIError).code || "OTP_VERIFICATION_FAILED",
                     true,
                     (error as APIError).publicMessage || "Failed to verify OTP. Please try again later."
+                );
+            }
+        },
+        logoutHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+            try {
+                // Extract refresh token from Authorization header
+                const authHeader = request.headers.authorization;
+                if (!authHeader) {
+                    throw new APIError(
+                        "Authorization header is required",
+                        401,
+                        "MISSING_AUTH_TOKEN",
+                        false,
+                        "Authorization header is missing"
+                    );
+                }
+
+                // Extract token from "Bearer <token>" format
+                const refreshToken = authHeader.startsWith('Bearer ') 
+                    ? authHeader.slice(7) 
+                    : authHeader;
+
+                if (!refreshToken) {
+                    throw new APIError(
+                        "Invalid authorization format",
+                        401,
+                        "INVALID_AUTH_FORMAT",
+                        false,
+                        "Authorization header must be in format 'Bearer <token>'"
+                    );
+                }
+
+                // Create all the db repositories
+                const userTokenRepo = fastify.db.getRepository(UserToken);
+                const deviceRepo = fastify.db.getRepository(UserDevice);
+                const userOtpRepo = fastify.db.getRepository(UserOtp);
+
+                // Find the active token record using the refresh token
+                const tokenRecord = await userTokenRepo.findOne({
+                    where: { 
+                        refreshToken, 
+                        isActive: true,
+                        refreshTokenStatus: RefreshTokenStatus.ACTIVE
+                    }
+                });
+
+                if (!tokenRecord) {
+                    throw new APIError(
+                        "Invalid or expired refresh token",
+                        401,
+                        "INVALID_REFRESH_TOKEN",
+                        false,
+                        "The provided refresh token is invalid or expired."
+                    );
+                }
+
+                // Deactivate the token
+                await userTokenRepo.update(
+                    { id: tokenRecord.id },
+                    {
+                        isActive: false,
+                        refreshTokenStatus: RefreshTokenStatus.INACTIVE
+                    }
+                );
+
+                // Deactivate the device
+                await deviceRepo.update(
+                    { id: tokenRecord.deviceId },
+                    { isActive: false }
+                );
+
+                // Deactivate any active OTPs for this device
+                await userOtpRepo.update(
+                    { userId: tokenRecord.userId, deviceId: tokenRecord.deviceId, isActive: true },
+                    { isActive: false }
+                );
+
+                const result = createSuccessResponse({}, "Logout successful");
+                return reply.status(200).send(result);
+
+            } catch (error) {
+                throw new APIError(
+                    (error as APIError).message,
+                    (error as APIError).statusCode || 400,
+                    (error as APIError).code || "LOGOUT_FAILED",
+                    true,
+                    (error as APIError).publicMessage || "Failed to logout. Please try again later."
                 );
             }
         }
