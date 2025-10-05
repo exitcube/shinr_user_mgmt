@@ -66,7 +66,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 });
                 const otpToken = await generateOtpToken({
                     // userId: user.id,
-                    tokenId: userOtp.id,
+                    
                     userUUId: user.uuid,
                     deviceUUId: userDevice.uuid
                 });
