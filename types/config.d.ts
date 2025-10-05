@@ -12,6 +12,7 @@ declare module 'fastify' {
 }
 
 export type otpTokenPayloadType = {
+  tokenId : number;
   userUUId : string;
   deviceUUId: string;
 }

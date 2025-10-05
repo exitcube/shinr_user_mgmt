@@ -56,22 +56,23 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
 
                 user.lastActive = new Date();
                 await userRepo.save(user);
-
-
-                const otpToken = await generateOtpToken({
-                    // userId: user.id,
-                    userUUId: user.uuid,
-                    deviceUUId: userDevice.uuid
-                });
                 const otp = generateOtp();
                 const userOtp = userOtpRepo.create({
                     userId: user.id,
                     deviceId: userDevice.id,
                     otp,
-                    otpToken,
                     lastRequestedTime: new Date(),
                     requestCount: 1,
                 });
+                const otpToken = await generateOtpToken({
+                    // userId: user.id,
+                    tokenId: userOtp.id,
+                    userUUId: user.uuid,
+                    deviceUUId: userDevice.uuid
+                });
+                userOtp.otpToken = otpToken;
+                
+                
                 await userOtpRepo.save(userOtp);
 
 
