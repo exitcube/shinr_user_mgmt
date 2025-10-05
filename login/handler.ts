@@ -36,7 +36,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 });
                 if (existingDevice) {
                     await deviceRepo.remove(existingDevice);
-                    await userOtpRepo.delete({ userId: user.id, deviceId: existingDevice.id });
+                    // await userOtpRepo.delete({ userId: user.id, deviceId: existingDevice.id });
                     await userTokenRepo.update({ userId: user.id, deviceId: existingDevice.id }, { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE });
 
                 }
@@ -96,10 +96,20 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 const userRepo = fastify.db.getRepository(User);
                 const userOtpRepo = fastify.db.getRepository(UserOtp);
                 const userTokenRepo = fastify.db.getRepository(UserToken);
+                
 
                 // verify otp
                 const payload = await verifyOtpToken(otpToken);
                 console.log("payload", payload);
+                if(request.deviceId !== payload.deviceUUId){
+                    throw new APIError(
+                        "Invalid device id",
+                        400,
+                        "INVALID_DEVICE_ID",
+                        false,
+                        "The device reqyuesting OTP verification does not match the device that requested the OTP. Please use the same device."
+                    );
+                }
                 const user = await userRepo.findOne({
                     where: { uuid: payload.userUUId, isActive: true },
                     relations: ['device']

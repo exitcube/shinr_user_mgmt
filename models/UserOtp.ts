@@ -25,7 +25,7 @@ export class UserOtp {
     @Index()
     userId: number;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => User,{ onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
     user: User;
 
@@ -33,7 +33,7 @@ export class UserOtp {
     @Index()
     deviceId: number;
 
-    @ManyToOne(() => UserDevice)
+    @ManyToOne(() => UserDevice,{ onDelete: 'CASCADE' })
     @JoinColumn({ name: 'deviceId' })
     device: UserDevice;
 
