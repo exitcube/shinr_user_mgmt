@@ -27,7 +27,6 @@ export type accessTokenPayloadType = {
   userId: number;
   userUUId : string;
   deviceUUId: string;
-  mobile : string;
 }
 
 // Define interfaces for the return types
@@ -66,5 +65,4 @@ export interface AuthenticatedUser {
   userId: number;
   userUUId: string;
   deviceUUId: string;
-  mobile: string;
 }
