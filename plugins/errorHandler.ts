@@ -7,11 +7,7 @@ import {
   InternalServerError 
 } from '../types/errors';
 
-declare module 'fastify' {
-  interface FastifyInstance {
-    throwAPIError: (error: APIError) => never;
-  }
-}
+
 
 const errorHandlerPlugin: FastifyPluginAsync = async (fastify) => {
   // Decorate fastify with a helper method to throw API errors
