@@ -1,11 +1,10 @@
-import Fastify from 'fastify';
-import typeormPlugin from './plugins/typeorm';
-import userDevicePlugin from './plugins/user';
-import errorHandlerPlugin from './plugins/errorHandler';
-import routes from './routes/root';
-import path from 'path';
-import YAML from 'yamljs';
-import fs from 'fs';
+import Fastify from "fastify";
+import typeormPlugin from "./plugins/typeorm";
+import errorHandlerPlugin from "./plugins/errorHandler";
+import routes from "./routes/root";
+import path from "path";
+import YAML from "yamljs";
+import fs from "fs";
 
 export async function buildApp() {
   const fastify = Fastify({
@@ -19,13 +18,12 @@ export async function buildApp() {
   // Register routes
   await fastify.register(routes);
 
-  // ✅ Load Swagger YAML file
-  const swaggerPath = path.join(__dirname, './swagger/swagger.yaml');
-  const swaggerDoc = YAML.load(swaggerPath);
+  // ✅ Load YAML file 
+  const file = fs.readFileSync(path.join(__dirname, "./swagger/swagger.yaml"), "utf8");
+  const swaggerDocument = YAML.parse(file);
 
-  // ✅ Optional: serve YAML as JSON at /docs endpoint
-  fastify.get('/docs', async () => {
-    return swaggerDoc;
+  fastify.get("/docs", async () => {
+    return swaggerDocument;
   });
 
   return fastify;
