@@ -16,7 +16,7 @@ export async function generateOtpToken(payload : otpTokenPayloadType) {
 
 export async function verifyOtpToken(token: string) {
   const { payload } = await jwtVerify(token, OTP_SECRET, { algorithms: ["HS256"] });
-  return payload as { userId: number; userUUId: string; deviceUUId: string; jti: string };
+  return payload as { tokenId : number,userId: number; userUUId: string; deviceUUId: string; jti: string };
 }
 
 export async function generateRefreshToken(payload : refreshTokenPayloadType) {

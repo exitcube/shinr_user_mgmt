@@ -1,21 +1,5 @@
-import axios, { type RawAxiosRequestHeaders, type AxiosRequestConfig } from "axios";
-
-interface GetRequestOptions {
-  endpoint: string;
-  query?: Record<string, any>;
-  headers?: RawAxiosRequestHeaders;
-}
-
-interface PostPutRequestOptions {
-  endpoint: string;
-  body?: Record<string, any>;
-  headers?: RawAxiosRequestHeaders;
-}
-
-interface DeleteRequestOptions {
-  endpoint: string;
-  headers?: RawAxiosRequestHeaders;
-}
+import axios, { type AxiosRequestConfig } from "axios";
+import type { GetRequestOptions, PostPutRequestOptions, DeleteRequestOptions } from "../types/request";
 
 // ---------------- GET ----------------
 export async function getRequest({ endpoint, query = {}, headers = {} }: GetRequestOptions): Promise<{ data: any; status: number; headers: Record<string, unknown> }> {
@@ -107,3 +91,5 @@ export async function deleteRequest({ endpoint, headers = {} }: DeleteRequestOpt
     throw error;
   }
 }
+
+
