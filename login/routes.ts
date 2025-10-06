@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import { validation } from '../utils/validation';
-import { loginValidate, verifyOtpValidate } from './validators';
+import { loginValidate, verifyOtpValidate,verifyOtpTokenValidate } from './validators';
 import controller from './handler';
 import { deviceIdValidationPreHandler } from '../utils/authValidation';
 
@@ -16,8 +16,10 @@ export default async function loginRoutes(fastify: FastifyInstance, opts: Fastif
 	},
 		handler.verifyOtpHandler);
 
-
-
+	fastify.post('/login/resend-otp', {  
+			preHandler:[deviceIdValidationPreHandler,validation(verifyOtpTokenValidate)]
+		},
+		 handler.resendOtpHandler);
 }
 
 
