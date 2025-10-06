@@ -198,13 +198,12 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
           try {
             const { otpToken } = request.body;
             const deviceId = request.deviceId;
-             
-            const userRepo = fastify.db.getRepository(User);
+            
             const userOtpRepo = fastify.db.getRepository(UserOtp);
     
             //  Verify and decode otpToken 
             const payload = await verifyOtpToken(otpToken);
-            const { userUUId, deviceUUId } = payload;
+            const { userUUId,deviceUUId,tokenId } = payload;
     
             // Ensure the request device matches the token device
             if (deviceId !== deviceUUId) {
@@ -217,25 +216,10 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
               );
             }
     
-            // Get user info
-            const user = await userRepo.findOne({
-              where: { uuid: userUUId, isActive: true },
-              relations: ['device']
-          });
-            if (!user) {
-              throw new APIError(
-                "User not found",
-                404,
-                "USER_NOT_FOUND",
-                false,
-                "User does not exist."
-              );
-            }
-             
-             
+            
             //  Find existing OTP record
             const otpRecord = await userOtpRepo.findOne({
-              where: { userId: user.id, deviceId: user.device.id, isActive: true }
+              where: { id:tokenId, isActive: true },
             });
     
             // Ensure there is an active OTP flow
@@ -247,9 +231,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 false,
                 "No active OTP found for this device. Please initiate login again."
               );
-            }
-    
-              
+            }          
             //  block resends within 45 seconds and checking requestcount
             const secondsSinceLastRequest = Math.floor((Date.now() - new Date(otpRecord.lastRequestedTime).getTime()) / 1000);
             if (secondsSinceLastRequest < 45) {
@@ -274,16 +256,11 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                ` Please wait ${waitSeconds} seconds before requesting a new OTP.`
               );
             }
-    
-             
-    
+          
             //  Generate new OTP and new token
             const newOtp = generateOtp();
-            const newOtpToken = await generateOtpToken({
-              userUUId: user.uuid,
-              deviceUUId: user.device.uuid,
-            });
-    
+            const newOtpToken = await generateOtpToken({tokenId,userUUId,deviceUUId});
+
             //saving new otp records
               otpRecord.otp = newOtp;
               otpRecord.otpToken = newOtpToken;
