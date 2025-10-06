@@ -27,12 +27,6 @@ if (missing.length > 0) {
   throw new Error(msg);
 }
 
-// Validate numeric envs
-const refreshDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS as string, 10);
-if (Number.isNaN(refreshDays) || refreshDays <= 0) {
-  throw new Error("REFRESH_TOKEN_EXPIRY_DAYS must be a positive integer");
-}
-
 export const ENV = {
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: parseInt(process.env.PORT || "3000", 10),
