@@ -63,17 +63,19 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     otp,
                     lastRequestedTime: new Date(),
                     requestCount: 1,
+                    otpToken: ""
                 });
+                 await userOtpRepo.save(userOtp);
                 const otpToken = await generateOtpToken({
                     // userId: user.id,
-                    
+                    tokenId: userOtp.id,
                     userUUId: user.uuid,
                     deviceUUId: userDevice.uuid
                 });
                 userOtp.otpToken = otpToken;
                 
                 
-                await userOtpRepo.save(userOtp);
+                await userOtpRepo.update(userOtp.id, { otpToken });
 
 
                 const result = createSuccessResponse({ otpToken }, "OTP generated");
@@ -124,7 +126,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     );
                 }
                 const otpRecord = await userOtpRepo.findOne({
-                    where: { userId: user.id, deviceId: user.device.id, isActive: true },
+                    where: { id :payload.tokenId, userId: user.id, deviceId: user.device.id, isActive: true },
                 });
 
                 if (otpRecord?.otpToken !== otpToken) {
