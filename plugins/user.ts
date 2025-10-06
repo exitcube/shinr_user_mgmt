@@ -12,7 +12,7 @@ interface UserDeviceParams {
 declare module 'fastify' {
   interface FastifyInstance {
     db: DataSource;
-    getUserDeviceInfo: (params: UserDeviceParams) => Promise<{ user: User; device?: UserDevice } | null>;
+    getUserDeviceInfo: (params: UserDeviceParams) => Promise<User | null>;
   }
 }
 
@@ -22,26 +22,36 @@ const userDevicePlugin: FastifyPluginAsync = async (fastify) => {
       if (!userUUID) throw new Error('userUUID is required');
 
       const userRepo = fastify.db.getRepository(User);
-      const deviceRepo = fastify.db.getRepository(UserDevice);
 
-      const user = await userRepo.findOne({ where: { uuid: userUUID } });
-      if (!user) return null;
-
-      let device: UserDevice | undefined = undefined;
+      const userQuery = userRepo
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.device', 'device')
+        .select([
+          'user.id',
+          'user.name',
+          'user.email',
+          'user.mobile',
+          'user.lastActive',
+          'device.id',
+          'device.lastLogin',
+          'device.userAgent',
+          'device.ipAddress'
+        ])
+        .where('user.uuid = :userUUID', { userUUID })
+        .andWhere('user.isActive = :isActive', { isActive: true });
 
       if (deviceUUID) {
-        device = await deviceRepo.findOne({
-          where: { uuid: deviceUUID, userId: user.id },
-        }) ?? undefined;
+        userQuery.andWhere('device.uuid = :deviceUUID', { deviceUUID });
+      } else {
+        userQuery.andWhere('device.isActive = :isActive', { isActive: true });
       }
 
-      return { user, device };
-    });
+      const user = await userQuery.getOne();
 
-    console.log('✅ User-Device plugin registered successfully');
-  } catch (error) {
-    console.error('❌ Failed to register User-Device plugin:', error);
-    throw error;
+      return user; // user.device contains device info
+    });
+  } catch (error: any) {
+    throw new Error(error.message); // <-- just throw error message
   }
 };
 
