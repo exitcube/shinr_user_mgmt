@@ -36,7 +36,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 });
                 if (existingDevice) {
                     await deviceRepo.remove(existingDevice);
-                    await userOtpRepo.delete({ userId: user.id, deviceId: existingDevice.id });
+                    // await userOtpRepo.delete({ userId: user.id, deviceId: existingDevice.id });
                     await userTokenRepo.update({ userId: user.id, deviceId: existingDevice.id }, { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE });
 
                 }
@@ -56,23 +56,26 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
 
                 user.lastActive = new Date();
                 await userRepo.save(user);
-
-
-                const otpToken = await generateOtpToken({
-                    // userId: user.id,
-                    userUUId: user.uuid,
-                    deviceUUId: userDevice.uuid
-                });
                 const otp = generateOtp();
                 const userOtp = userOtpRepo.create({
                     userId: user.id,
                     deviceId: userDevice.id,
                     otp,
-                    otpToken,
                     lastRequestedTime: new Date(),
                     requestCount: 1,
+                    otpToken: ""
                 });
-                await userOtpRepo.save(userOtp);
+                 await userOtpRepo.save(userOtp);
+                const otpToken = await generateOtpToken({
+                    // userId: user.id,
+                    tokenId: userOtp.id,
+                    userUUId: user.uuid,
+                    deviceUUId: userDevice.uuid
+                });
+                userOtp.otpToken = otpToken;
+                
+                
+                await userOtpRepo.update(userOtp.id, { otpToken });
 
 
                 const result = createSuccessResponse({ otpToken }, "OTP generated");
@@ -95,10 +98,20 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 const userRepo = fastify.db.getRepository(User);
                 const userOtpRepo = fastify.db.getRepository(UserOtp);
                 const userTokenRepo = fastify.db.getRepository(UserToken);
+                
 
                 // verify otp
                 const payload = await verifyOtpToken(otpToken);
                 console.log("payload", payload);
+                if(request.deviceId !== payload.deviceUUId){
+                    throw new APIError(
+                        "Invalid device id",
+                        400,
+                        "INVALID_DEVICE_ID",
+                        false,
+                        "The device reqyuesting OTP verification does not match the device that requested the OTP. Please use the same device."
+                    );
+                }
                 const user = await userRepo.findOne({
                     where: { uuid: payload.userUUId, isActive: true },
                     relations: ['device']
@@ -113,7 +126,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     );
                 }
                 const otpRecord = await userOtpRepo.findOne({
-                    where: { userId: user.id, deviceId: user.device.id, isActive: true },
+                    where: { id :payload.tokenId, userId: user.id, deviceId: user.device.id, isActive: true },
                 });
 
                 if (otpRecord?.otpToken !== otpToken) {
@@ -154,7 +167,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 await userTokenRepo.save(userToken);
 
                 const refreshToken = await generateRefreshToken({ userUUId: user.uuid, deviceUUId: user.device.uuid, tokenId: userToken.id });
-                const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid, mobile: user.mobile });
+                const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid });
                 console.log(refreshToken, accessToken);
                 const refreshTokenExpiry = new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "60") * 24 * 60 * 60 * 1000);
                 userToken.refreshToken = refreshToken;
