@@ -3,11 +3,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { DataSource } from 'typeorm';
 import { initializeDatabase, closeDatabase } from "../config/database"
 
-declare module 'fastify' {
-  interface FastifyInstance {
-    db: DataSource;
-  }
-}
+
 
 const typeormPlugin: FastifyPluginAsync = async (fastify) => {
   try {

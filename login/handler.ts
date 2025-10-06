@@ -36,7 +36,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 });
                 if (existingDevice) {
                     await deviceRepo.remove(existingDevice);
-                    await userOtpRepo.delete({ userId: user.id, deviceId: existingDevice.id });
+                    // await userOtpRepo.delete({ userId: user.id, deviceId: existingDevice.id });
                     await userTokenRepo.update({ userId: user.id, deviceId: existingDevice.id }, { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE });
 
                 }
@@ -56,22 +56,23 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
 
                 user.lastActive = new Date();
                 await userRepo.save(user);
-
-
-                const otpToken = await generateOtpToken({
-                    // userId: user.id,
-                    userUUId: user.uuid,
-                    deviceUUId: userDevice.uuid
-                });
                 const otp = generateOtp();
                 const userOtp = userOtpRepo.create({
                     userId: user.id,
                     deviceId: userDevice.id,
                     otp,
-                    otpToken,
                     lastRequestedTime: new Date(),
                     requestCount: 1,
                 });
+                const otpToken = await generateOtpToken({
+                    // userId: user.id,
+                    
+                    userUUId: user.uuid,
+                    deviceUUId: userDevice.uuid
+                });
+                userOtp.otpToken = otpToken;
+                
+                
                 await userOtpRepo.save(userOtp);
 
 
@@ -95,10 +96,20 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 const userRepo = fastify.db.getRepository(User);
                 const userOtpRepo = fastify.db.getRepository(UserOtp);
                 const userTokenRepo = fastify.db.getRepository(UserToken);
+                
 
                 // verify otp
                 const payload = await verifyOtpToken(otpToken);
                 console.log("payload", payload);
+                if(request.deviceId !== payload.deviceUUId){
+                    throw new APIError(
+                        "Invalid device id",
+                        400,
+                        "INVALID_DEVICE_ID",
+                        false,
+                        "The device reqyuesting OTP verification does not match the device that requested the OTP. Please use the same device."
+                    );
+                }
                 const user = await userRepo.findOne({
                     where: { uuid: payload.userUUId, isActive: true },
                     relations: ['device']
@@ -154,7 +165,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 await userTokenRepo.save(userToken);
 
                 const refreshToken = await generateRefreshToken({ userUUId: user.uuid, deviceUUId: user.device.uuid, tokenId: userToken.id });
-                const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid, mobile: user.mobile });
+                const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid });
                 console.log(refreshToken, accessToken);
                 const refreshTokenExpiry = new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "60") * 24 * 60 * 60 * 1000);
                 userToken.refreshToken = refreshToken;
@@ -184,19 +195,31 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
     ) => {
       try {
         const { otpToken } = request.body;
-
+        const deviceId = request.deviceId;
+         
         const userRepo = fastify.db.getRepository(User);
-        const deviceRepo = fastify.db.getRepository(UserDevice);
         const userOtpRepo = fastify.db.getRepository(UserOtp);
 
         //  Verify and decode otpToken 
         const payload = await verifyOtpToken(otpToken);
         const { userUUId, deviceUUId } = payload;
 
+        // Ensure the request device matches the token device
+        if (deviceId !== deviceUUId) {
+          throw new APIError(
+            "Invalid device id",
+            400,
+            "INVALID_DEVICE_ID",
+            false,
+            "The device requesting OTP resend does not match the device that requested the OTP."
+          );
+        }
+
         // Get user info
         const user = await userRepo.findOne({
           where: { uuid: userUUId, isActive: true },
-        });
+          relations: ['device']
+      });
         if (!user) {
           throw new APIError(
             "User not found",
@@ -206,28 +229,40 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             "User does not exist."
           );
         }
-        // Get device info
-        const device = await deviceRepo.findOne({
-          where: { uuid: deviceUUId, userId: user.id, isActive: true },
+         
+         
+        //  Find existing OTP record
+        const otpRecord = await userOtpRepo.findOne({
+          where: { userId: user.id, deviceId: user.device.id, isActive: true }
         });
-        if (!device) {
+
+        // Ensure there is an active OTP flow
+        if (!otpRecord) {
           throw new APIError(
-            "Device not found",
-            404,
-            "DEVICE_NOT_FOUND",
+            "No active OTP request",
+            400,
+            "NO_ACTIVE_OTP",
             false,
-            "No active device found."
+            "No active OTP found for this device. Please initiate login again."
           );
         }
 
-        // 3️ Find existing OTP record for that user/device
-        let otpRecord = await userOtpRepo.findOne({
-          where: { userId: user.id, deviceId: device.id, isActive: true },
-          order: { lastRequestedTime: "DESC" },
-        });
+          
+        //  block resends within 45 seconds
+        const secondsSinceLastRequest = Math.floor((Date.now() - new Date(otpRecord.lastRequestedTime).getTime()) / 1000);
+        if (secondsSinceLastRequest < 45) {
+          const waitSeconds = 45 - secondsSinceLastRequest;
+          throw new APIError(
+            "OTP resend cooldown",
+            429,
+            "OTP_RESEND_COOLDOWN",
+            false,
+            `Please wait ${waitSeconds} seconds before requesting a new OTP.`
+          );
+        }
 
-        // 4️ Check request count limit
-        if (otpRecord && otpRecord.requestCount >= 5) {
+        //  Check request count limit
+        if (otpRecord.requestCount >= 5) {
           otpRecord.isActive = false;
           await userOtpRepo.save(otpRecord);
           throw new APIError(
@@ -239,29 +274,18 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
           );
         }
 
-        // 5️ Generate new OTP and new token
+        //  Generate new OTP and new token
         const newOtp = generateOtp();
         const newOtpToken = await generateOtpToken({
           userUUId: user.uuid,
-          deviceUUId: device.uuid,
+          deviceUUId: user.device.uuid,
         });
 
-        if (!otpRecord) {
-          otpRecord = userOtpRepo.create({
-            userId: user.id,
-            deviceId: device.id,
-            otp: newOtp,
-            otpToken: newOtpToken,
-            lastRequestedTime: new Date(),
-            requestCount: 1,
-            isActive: true,
-          });
-        } else {
+        //saving new otp records
           otpRecord.otp = newOtp;
           otpRecord.otpToken = newOtpToken;
           otpRecord.lastRequestedTime = new Date();
           otpRecord.requestCount += 1;
-        }
 
         await userOtpRepo.save(otpRecord);
 

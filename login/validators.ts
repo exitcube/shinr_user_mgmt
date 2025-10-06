@@ -12,6 +12,7 @@ export const loginValidate = {
     }),
     query: Joi.object({}), // empty object schema for query
 };
+
 export const verifyOtpValidate = {
     body: Joi.object({
         otpToken: Joi.string()
@@ -20,11 +21,23 @@ export const verifyOtpValidate = {
                 'string.empty': 'otp token is required',
             }),
         otp: Joi.string()
-            .pattern(/^\d{6}$/) // 6-digit number as string
+            .pattern(/^\d{4}$/) // 4-digit number as string
             .required()
             .messages({
                 'string.empty': 'OTP is required',
-                'string.pattern.base': 'OTP must be a 6-digit number',
+                'string.pattern.base': 'OTP must be a 4-digit number',
+ 
+            }),
+    }),
+    query: Joi.object({}), // empty object schema for query
+};
+
+export const verifyOtpTokenValidate = {
+    body: Joi.object({
+        otpToken: Joi.string()
+            .required()
+            .messages({
+                'string.empty': 'OTP token is required',
             }),
     }),
     query: Joi.object({}), // empty object schema for query

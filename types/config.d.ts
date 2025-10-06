@@ -3,31 +3,39 @@ import 'fastify';
 
 declare module 'fastify' {
   interface FastifyInstance {
+    db: DataSource;
+    throwAPIError: (error: APIError) => never;
     config: {
       port: number;
       nodeEnv: string;
       appName: string;
     };
+
+  }
+}
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    deviceId?: string;
   }
 }
 
 export type otpTokenPayloadType = {
-  userUUId : string;
+  userUUId: string;
   deviceUUId: string;
 }
 
 
 export type refreshTokenPayloadType = {
   tokenId: number;
-  userUUId : string;
+  userUUId: string;
   deviceUUId: string;
 }
 
 export type accessTokenPayloadType = {
   userId: number;
-  userUUId : string;
+  userUUId: string;
   deviceUUId: string;
-  mobile : string;
 }
 
 // Define interfaces for the return types
@@ -66,5 +74,4 @@ export interface AuthenticatedUser {
   userId: number;
   userUUId: string;
   deviceUUId: string;
-  mobile: string;
 }

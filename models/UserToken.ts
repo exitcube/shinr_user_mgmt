@@ -17,7 +17,7 @@ export class UserToken {
     @Index()
     userId: number;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => User,{ onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
     user: User;
 
@@ -32,13 +32,13 @@ export class UserToken {
     @Column({ type: 'text' })
     refreshToken: string;
 
-    @Column({ unique: true })
+    @Column()
     accessToken: string;
 
     @Column({ type: 'timestamp', nullable: true })
     refreshTokenExpiry: Date | null;
 
-    @Column({ unique: true })
+    @Column()
     refreshTokenStatus: string;
 
     @Column({ default: false })
