@@ -187,8 +187,103 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     (error as APIError).publicMessage || "Failed to verify OTP. Please try again later."
                 );
             }
-        }
+        },
+        resendOtpHandler: async (
+          request: FastifyRequest<{ Body: { otpToken: string } }>,
+          reply: FastifyReply
+        ) => {
+          try {
+            const { otpToken } = request.body;
+            const deviceId = request.deviceId;
+            
+            const userOtpRepo = fastify.db.getRepository(UserOtp);
+    
+            //  Verify and decode otpToken 
+            const payload = await verifyOtpToken(otpToken);
+            const { userUUId,deviceUUId,tokenId } = payload;
+    
+            // Ensure the request device matches the token device
+            if (deviceId !== deviceUUId) {
+              throw new APIError(
+                "Invalid device id",
+                400,
+                "INVALID_DEVICE_ID",
+                false,
+                "The device requesting OTP resend does not match the device that requested the OTP."
+              );
+            }
+    
+            
+            //  Find existing OTP record
+            const otpRecord = await userOtpRepo.findOne({
+              where: { id:tokenId, isActive: true },
+            });
+    
+            // Ensure there is an active OTP flow
+            if (!otpRecord) {
+              throw new APIError(
+                "No active OTP request",
+                400,
+                "NO_ACTIVE_OTP",
+                false,
+                "No active OTP found for this device. Please initiate login again."
+              );
+            }     
+            //checking requestcount
+            if (otpRecord.requestCount > 5) {
+              otpRecord.isActive = false;
+              await userOtpRepo.save(otpRecord);
+              throw new APIError(
+                "OTP limit exceeded",
+                429,
+                "OTP_LIMIT_EXCEEDED",
+                false,
+                "Too many OTP requests. Try again later."
+              );
+            }
+            //  block resends within 45 seconds and 
+            const secondsSinceLastRequest = Math.floor((Date.now() - new Date(otpRecord.lastRequestedTime).getTime()) / 1000);
+            if (secondsSinceLastRequest < 45) {
+              const waitSeconds = 45 - secondsSinceLastRequest;
+              throw new APIError(
+                "OTP resend cooldown",
+                429,
+                "OTP_RESEND_COOLDOWN",
+                false,
+               ` Please wait ${waitSeconds} seconds before requesting a new OTP.`
+              );
+            }
+          
+            //  Generate new OTP and new token
+            const newOtp = generateOtp();
+            const newOtpToken = await generateOtpToken({tokenId,userUUId,deviceUUId});
 
+            //saving new otp records
+              otpRecord.otp = newOtp;
+              otpRecord.otpToken = newOtpToken;
+              otpRecord.lastRequestedTime = new Date();
+              otpRecord.requestCount += 1;
+    
+            await userOtpRepo.save(otpRecord);
+    
+            const result = createSuccessResponse(
+              { otpToken: otpRecord.otpToken },
+              "OTP resent successfully"
+            );
+            return reply.status(200).send(result);
+          } catch (error) {
+            throw new APIError(
+              (error as APIError).message,
+              (error as APIError).statusCode || 400,
+              (error as APIError).code || "OTP_RESEND_FAILED",
+              true,
+              (error as APIError).publicMessage ||
+                "Failed to resend OTP. Please try again later."
+            );
+          }
+        }
+            
+    
+        }
     }
-}
 
