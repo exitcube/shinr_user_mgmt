@@ -231,22 +231,22 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 false,
                 "No active OTP found for this device. Please initiate login again."
               );
-            }          
-            //  block resends within 45 seconds and checking requestcount
+            }     
+            //checking requestcount
+            if (otpRecord.requestCount > 5) {
+              otpRecord.isActive = false;
+              await userOtpRepo.save(otpRecord);
+              throw new APIError(
+                "OTP limit exceeded",
+                429,
+                "OTP_LIMIT_EXCEEDED",
+                false,
+                "Too many OTP requests. Try again later."
+              );
+            }
+            //  block resends within 45 seconds and 
             const secondsSinceLastRequest = Math.floor((Date.now() - new Date(otpRecord.lastRequestedTime).getTime()) / 1000);
             if (secondsSinceLastRequest < 45) {
-
-              if (otpRecord.requestCount >= 5) {
-                otpRecord.isActive = false;
-                await userOtpRepo.save(otpRecord);
-                throw new APIError(
-                  "OTP limit exceeded",
-                  429,
-                  "OTP_LIMIT_EXCEEDED",
-                  false,
-                  "Too many OTP requests. Try again later."
-                );
-              }
               const waitSeconds = 45 - secondsSinceLastRequest;
               throw new APIError(
                 "OTP resend cooldown",
