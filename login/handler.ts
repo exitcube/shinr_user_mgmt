@@ -73,10 +73,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     deviceUUId: userDevice.uuid
                 });
                 userOtp.otpToken = otpToken;
-                
-                
-                await userOtpRepo.update(userOtp.id, { otpToken });
-
+                await userOtpRepo.save(userOtp);
 
                 const result = createSuccessResponse({ otpToken }, "OTP generated");
                 return reply.status(200).send(result);
