@@ -29,6 +29,7 @@ paths:
               properties:
                 mobile:
                   type: string
+                  description: User mobile number
       responses:
         "200":
           description: OTP generated successfully
@@ -46,8 +47,22 @@ paths:
                         type: string
         "400":
           description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "500":
-          description: OTP generation failed
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
 
   /user/login/verify-otp:
     post:
@@ -67,8 +82,10 @@ paths:
               properties:
                 otpToken:
                   type: string
+                  description: Token received when OTP was generated
                 otp:
                   type: string
+                  description: One-time password sent to user
       responses:
         "200":
           description: OTP verified successfully and tokens generated
@@ -88,5 +105,19 @@ paths:
                         type: string
         "400":
           description: Invalid OTP or token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "500":
-          description: OTP verification failed
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
