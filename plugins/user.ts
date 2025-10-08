@@ -1,7 +1,6 @@
 import fp from 'fastify-plugin';
 import { FastifyPluginAsync } from 'fastify';
 import { User } from '../models/User';
-import { UserDevice } from '../models/UserDevice';
 import { DataSource } from 'typeorm';
 
 interface UserDeviceParams {
@@ -23,35 +22,35 @@ const userDevicePlugin: FastifyPluginAsync = async (fastify) => {
 
       const userRepo = fastify.db.getRepository(User);
 
-      const userQuery = userRepo
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.device', 'device')
-        .select([
-          'user.id',
-          'user.name',
-          'user.email',
-          'user.mobile',
-          'user.lastActive',
-          'device.id',
-          'device.lastLogin',
-          'device.userAgent',
-          'device.ipAddress'
-        ])
-        .where('user.uuid = :userUUID', { userUUID })
-        .andWhere('user.isActive = :isActive', { isActive: true });
-
+      
+      const where: any = { uuid: userUUID, isActive: true };
       if (deviceUUID) {
-        userQuery.andWhere('device.uuid = :deviceUUID', { deviceUUID });
-      } else {
-        userQuery.andWhere('device.isActive = :isActive', { isActive: true });
+        where.device = { uuid: deviceUUID, isActive: true };
       }
 
-      const user = await userQuery.getOne();
+      // Fetch user along with device using relation 
+      const user = await userRepo.findOne({
+        where,
+        relations: ['device'], 
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          mobile: true,
+          lastActive: true,
+          device: {
+            id: true,
+            lastLogin: true,
+            userAgent: true,
+            ipAddress: true,
+          }
+        }
+      });
 
-      return user; // user.device contains device info
+      return user;
     });
   } catch (error: any) {
-    throw new Error(error.message); // <-- just throw error message
+    throw new Error(error.message);
   }
 };
 

@@ -29,3 +29,13 @@ export const verifyOtpValidate = {
     }),
     query: Joi.object({}), // empty object schema for query
 };
+export const verifyOtpTokenValidate = {
+    body: Joi.object({
+        otpToken: Joi.string()
+            .required()
+            .messages({
+                'string.empty': 'OTP token is required',
+            }),
+    }),
+    query: Joi.object({}), // empty object schema for query
+};

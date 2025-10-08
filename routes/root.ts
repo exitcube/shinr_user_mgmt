@@ -12,10 +12,7 @@ export default async function routes(
       environment: process.env.NODE_ENV || 'development',
     };
   });
+
   fastify.register(loginRoutes, { prefix: '/user' });
   fastify.register(userRoutes, { prefix: '/user-profile' });
 }
-
-
-
-
