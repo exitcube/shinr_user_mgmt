@@ -30,7 +30,7 @@ export async function generateRefreshToken(payload : refreshTokenPayloadType) {
 
 export async function verifyRefreshToken(token: string) {
   const { payload } = await jwtVerify(token, REFRESH_TOKEN_SECRET, { algorithms: ["HS256"] });
-  return payload as { userId: number; userUUId: string; deviceUUId: string; jti: string };
+  return payload as { tokenId : number,userId: number; userUUId: string; deviceUUId: string; jti: string };
 }
 
 // This handles the public and private key concept 

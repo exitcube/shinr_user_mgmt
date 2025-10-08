@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { LoginRequestBody, verifyOtpRequestBody } from './type';
-import { generateOtpToken, generateRefreshToken, signAccessToken, verifyOtpToken } from '../utils/jwt';
+import { LoginRequestBody, verifyOtpRequestBody, refreshRequestBody } from './type';
+import { generateOtpToken, generateRefreshToken, signAccessToken, verifyOtpToken, verifyRefreshToken } from '../utils/jwt';
 import { generateOtp } from '../utils/helper';
 import { createSuccessResponse } from '../utils/response';
 import { APIError } from '../types/errors';
@@ -282,8 +282,93 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             );
           }
         }
+        ,
+        refreshTokenHandler: async (
+          request: FastifyRequest<{ Body: refreshRequestBody }>,
+          reply: FastifyReply
+        ) => {
+          try {
+            const { refreshToken } = request.body;
+            const deviceId = request.deviceId;
+
+            const userRepo = fastify.db.getRepository(User);
+            const userTokenRepo = fastify.db.getRepository(UserToken);
+
+            // Verify refresh token signature and expiry
+            const payload: any = await verifyRefreshToken(refreshToken);
+            const { userUUId, deviceUUId, tokenId } = payload;
+
+            // request device matches token device
+            if (deviceId !== deviceUUId) {
+              throw new APIError(
+                'Invalid device id',
+                400,
+                'INVALID_DEVICE_ID',
+                false,
+                'The device requesting token refresh does not match the device that owns the token.'
+              );
+            }
+
+             
+            const user = await userRepo.findOne({ where: { uuid: userUUId, isActive: true } });
+            if (!user) {
+              throw new APIError('User not found', 400, 'USER_NOT_FOUND', false, 'User does not exist or is inactive.');
+            }
+
+            // Find the existing token record
+            const existing = await userTokenRepo.findOne({ where: { id: tokenId, userId: user.id, isActive: true } });
+            if (!existing) {
+              throw new APIError('Refresh token not found', 400, 'REFRESH_TOKEN_NOT_FOUND', false, 'Invalid or inactive refresh token.');
+            }
+
+            // Ensure the refresh token matches the stored token 
+            if (existing.refreshToken !== refreshToken) {
+              throw new APIError('Refresh token mismatch', 400, 'REFRESH_TOKEN_MISMATCH', false, 'Provided refresh token does not match.');
+            }
+
+            // Ensure token is not already used/revoked
+            if (existing.refreshTokenStatus !== RefreshTokenStatus.ACTIVE) {
+              throw new APIError('Refresh token invalid state', 400, 'REFRESH_TOKEN_INVALID_STATE', false, 'Refresh token is not active.');
+            }
+
+            // Invalidate current token (rotate)
+            existing.isActive = false;
+            existing.refreshTokenStatus = RefreshTokenStatus.USED;
+            await userTokenRepo.save(existing);
+
+            // Create new user token row
+            const newTokenRow = userTokenRepo.create({
+              userId: user.id,
+              deviceId: existing.deviceId,
+              refreshTokenStatus: RefreshTokenStatus.ACTIVE,
+              isActive: true,
+              refreshToken: '',
+              accessToken: ''
+            });
+            await userTokenRepo.save(newTokenRow);
+            // new tokens
+            const newRefreshToken = await generateRefreshToken({ tokenId: newTokenRow.id, userUUId: user.uuid, deviceUUId: deviceUUId });
+            const newAccessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: deviceUUId });
+
+            // tokens and expiry
+            const refreshTokenExpiry = new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '60') * 24 * 60 * 60 * 1000);
+            newTokenRow.refreshToken = newRefreshToken;
+            newTokenRow.accessToken = newAccessToken;
+            newTokenRow.refreshTokenExpiry = refreshTokenExpiry;
+            await userTokenRepo.save(newTokenRow);
+
+            const result = createSuccessResponse({ accessToken: newAccessToken, refreshToken: newRefreshToken }, 'Tokens refreshed');
+            return reply.status(200).send(result);
+          } catch (error) {
+            throw new APIError(
+              (error as APIError).message,
+              (error as APIError).statusCode || 400,
+              (error as APIError).code || 'TOKEN_REFRESH_FAILED',
+              true,
+              (error as APIError).publicMessage || 'Failed to refresh token. Please login again.'
+            );
+          }
+        }
             
-    
         }
     }
-
