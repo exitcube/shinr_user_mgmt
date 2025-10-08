@@ -94,8 +94,8 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             } catch (error) {
                 throw new APIError(
                   (error as APIError).message,
-                  (error as APIError).statusCode || 400,
-                  (error as APIError).code || "OTP_VERIFICATION_FAILED",
+                  (error as APIError).statusCode || 500,
+                  (error as APIError).code || "OTP_GENERATION_FAILED",
                   true,
                   (error as APIError).publicMessage || "Failed to generate OTP. Please try again later."
                 );
