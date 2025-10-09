@@ -6,6 +6,7 @@ import { createSuccessResponse } from '../utils/response';
 import { APIError } from '../types/errors';
 import { User, UserDevice, UserOtp, UserToken } from '../models';
 import { RefreshTokenStatus } from '../utils/constant';
+import userDevicePlugin from "../plugins/user";
 
 export default function controller(fastify: FastifyInstance, opts: FastifyPluginOptions): any {
     return {
@@ -291,7 +292,6 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             const { refreshToken } = request.body;
             const deviceId = request.deviceId;
 
-            const userRepo = fastify.db.getRepository(User);
             const userTokenRepo = fastify.db.getRepository(UserToken);
 
             // Verify refresh token signature and expiry
@@ -309,8 +309,8 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
               );
             }
 
-             
-            const user = await userRepo.findOne({ where: { uuid: userUUId, isActive: true } });
+            
+            const user = await fastify.getUserDeviceInfo({ userUUID: userUUId, deviceUUID: deviceUUId });
             if (!user) {
               throw new APIError('User not found', 400, 'USER_NOT_FOUND', false, 'User does not exist or is inactive.');
             }
