@@ -29,8 +29,21 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     });
                     await userRepo.save(user);
                 }
-
-
+                else
+                {
+                    const diffMinutes = (Date.now() - new Date(user.lastLogoutTime).getTime()) / (1000 * 60);
+                    if (diffMinutes < 30) {
+                      const remaining = Math.ceil(30- diffMinutes);
+                      throw new APIError(
+                        "OTP cooldown active",
+                        429,
+                        "OTP_COOLDOWN_ACTIVE",
+                        false,
+                        `Too many OTP requests. Please try again after ${remaining} minute(s).`
+                      );
+                    
+                  }
+                }
                 const existingDevice = await deviceRepo.findOne({
                     where: { userId: user.id, isActive: true },
                 });
@@ -80,11 +93,11 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
 
             } catch (error) {
                 throw new APIError(
-                    (error as APIError).message,
-                    500,
-                    "OTP_GENERATION_FAILED",
-                    true,
-                    "Failed to generate OTP. Please try again later."
+                  (error as APIError).message,
+                  (error as APIError).statusCode || 500,
+                  (error as APIError).code || "OTP_GENERATION_FAILED",
+                  true,
+                  (error as APIError).publicMessage || "Failed to generate OTP. Please try again later."
                 );
             }
         },
@@ -217,6 +230,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             //  Find existing OTP record
             const otpRecord = await userOtpRepo.findOne({
               where: { id:tokenId, isActive: true },
+              relations: ['user']
             });
     
             // Ensure there is an active OTP flow
@@ -232,6 +246,8 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             //checking requestcount
             if (otpRecord.requestCount > 5) {
               otpRecord.isActive = false;
+              otpRecord.user.lastLogoutTime= new Date();
+              await userOtpRepo.manager.save(User, otpRecord.user);
               await userOtpRepo.save(otpRecord);
               throw new APIError(
                 "OTP limit exceeded",

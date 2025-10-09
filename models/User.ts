@@ -34,7 +34,11 @@ export class User {
     isActive: boolean;
 
     @Column({ type: 'timestamp', nullable: true })
+    lastLogoutTime: Date;
+
+    @Column({ type: 'timestamp', nullable: true })
     lastActive: Date;
+    
 
     @CreateDateColumn()
     createdAt: Date;
