@@ -316,11 +316,11 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             }
 
             // Find the existing token record
-            const existing = await userTokenRepo.findOne({ where: { id: tokenId, userId: user.id, isActive: true } });
+            const existing = await userTokenRepo.findOne({ where: { id: tokenId, userId: user.id} });
             if (!existing) {
               throw new APIError('Refresh token not found', 400, 'REFRESH_TOKEN_NOT_FOUND', false, 'Invalid or inactive refresh token.');
             }
-
+     
             // Ensure the refresh token matches the stored token 
             if (existing.refreshToken !== refreshToken) {
               throw new APIError('Refresh token mismatch', 400, 'REFRESH_TOKEN_MISMATCH', false, 'Provided refresh token does not match.');
@@ -328,8 +328,10 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
 
             // Ensure token is not already used/revoked
             if (existing.refreshTokenStatus !== RefreshTokenStatus.ACTIVE) {
+              await userTokenRepo.update( { id: existing.id },{ refreshTokenStatus: RefreshTokenStatus.REVOKED });
               throw new APIError('Refresh token invalid state', 400, 'REFRESH_TOKEN_INVALID_STATE', false, 'Refresh token is not active.');
             }
+
 
             // Invalidate current token (rotate)
             existing.isActive = false;
