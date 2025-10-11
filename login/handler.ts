@@ -373,47 +373,9 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
         },
         logoutHandler: async (request: FastifyRequest, reply: FastifyReply) => {
           try {
-              
-              const deviceId = request.deviceId;
-      
-              const authHeader = (request.headers as any).authorization;
-              if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                  throw new APIError(
-                      'Access token is required',
-                      401,
-                      'ACCESS_TOKEN_MISSING',
-                      false,
-                      'Please provide access token in the Authorization header as Bearer token'
-                  );
-              }
-              const accessToken = authHeader.split(' ')[1];
-      
-              // Verify access token
-              const payload = await verifyAccessToken(accessToken);
-              if (!payload) {
-                  throw new APIError(
-                      'Invalid or expired access token',
-                      401,
-                      'INVALID_ACCESS_TOKEN',
-                      false,
-                      'Please login again'
-                  );
-              }
-      
-              const { userUUId, deviceUUId } = payload;
-      
-              // Ensure the token device matches the request device
-              if (deviceId !== deviceUUId) {
-                  throw new APIError(
-                      'Device mismatch',
-                      400,
-                      'DEVICE_MISMATCH',
-                      false,
-                      'Device ID does not match the logged-in device'
-                  );
-              }
-      
-              
+              const { userUUId, deviceUUId } = (request as any).user;
+        
+              // Fetch user + device using plugin
               const user = await fastify.getUserDeviceInfo({ userUUID: userUUId, deviceUUID: deviceUUId });
               if (!user) {
                   throw new APIError(
@@ -424,18 +386,18 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                       'User or device does not exist or already logged out'
                   );
               }
-      
+        
               const userTokenRepo = fastify.db.getRepository(UserToken);
-      
+        
               // Delete the device
               await fastify.db.getRepository(UserDevice).remove(user.device);
-      
+        
               // Invalidate all refresh tokens for this device
               await userTokenRepo.update(
                   { userId: user.id, deviceId: user.device.id, isActive: true },
                   { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE }
               );
-      
+        
               return reply.status(200).send(createSuccessResponse({}, 'Logged out successfully'));
           } catch (error) {
               throw new APIError(
@@ -446,6 +408,8 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                   (error as APIError).publicMessage || 'Failed to logout. Please try again later.'
               );
           }
-      }          
+        }
+        
+            
         }
     }

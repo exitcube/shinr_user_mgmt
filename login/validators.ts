@@ -50,13 +50,4 @@ export const refreshTokenValidate = {
     }),
     query: Joi.object({}),
 };
-export const accessTokenValidate = {
-    body: Joi.object({
-        accessToken: Joi.string()
-            .required()
-            .messages({
-                'string.empty': 'Access token is required',
-            }),
-    }),
-    query: Joi.object({}),
-};
+
