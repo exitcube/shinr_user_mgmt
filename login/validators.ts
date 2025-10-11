@@ -39,3 +39,14 @@ export const verifyOtpTokenValidate = {
     }),
     query: Joi.object({}), // empty object schema for query
 };
+
+export const refreshTokenValidate = {
+    body: Joi.object({
+        refreshToken: Joi.string()
+            .required()
+            .messages({
+                'string.empty': 'Refresh token is required',
+            }),
+    }),
+    query: Joi.object({}),
+};
