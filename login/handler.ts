@@ -389,14 +389,14 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
         
               const userTokenRepo = fastify.db.getRepository(UserToken);
         
-              // Delete the device
-              await fastify.db.getRepository(UserDevice).remove(user.device);
-        
               // Invalidate all refresh tokens for this device
               await userTokenRepo.update(
-                  { userId: user.id, deviceId: user.device.id, isActive: true },
-                  { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE }
+                { userId: user.id, deviceId: user.device.id, isActive: true },
+                { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE }
               );
+
+              // Now safely delete the device
+              await fastify.db.getRepository(UserDevice).remove(user.device);
         
               return reply.status(200).send(createSuccessResponse({}, 'Logged out successfully'));
           } catch (error) {
