@@ -2,7 +2,8 @@ import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import { validation } from '../utils/validation';
 import { loginValidate, verifyOtpValidate,verifyOtpTokenValidate, refreshTokenValidate } from './validators';
 import controller from './handler';
-import { deviceIdValidationPreHandler } from '../utils/authValidation';
+import { deviceIdValidationPreHandler,authValidationPreHandler } from '../utils/authValidation';
+
 
 export default async function loginRoutes(fastify: FastifyInstance, opts: FastifyPluginOptions) {
 	const handler = controller(fastify, opts);
@@ -25,6 +26,11 @@ export default async function loginRoutes(fastify: FastifyInstance, opts: Fastif
         preHandler: [deviceIdValidationPreHandler, validation(refreshTokenValidate)]
     },
         handler.refreshTokenHandler);
+
+	fastify.post('/logout',{
+				preHandler: [authValidationPreHandler]
+			},
+			handler.logoutHandler);
 }
 
 

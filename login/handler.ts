@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { LoginRequestBody, verifyOtpRequestBody, refreshRequestBody } from './type';
-import { generateOtpToken, generateRefreshToken, signAccessToken, verifyOtpToken, verifyRefreshToken } from '../utils/jwt';
+import { LoginRequestBody, verifyOtpRequestBody, refreshRequestBody} from './type';
+import { generateOtpToken, generateRefreshToken, signAccessToken, verifyOtpToken, verifyRefreshToken, verifyAccessToken } from '../utils/jwt';
 import { generateOtp } from '../utils/helper';
 import { createSuccessResponse } from '../utils/response';
 import { APIError } from '../types/errors';
@@ -370,7 +370,46 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
               (error as APIError).publicMessage || 'Failed to refresh token. Please login again.'
             );
           }
+        },
+        logoutHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+          try {
+              const { userUUId, deviceUUId } = (request as any).user;
+        
+              // Fetch user + device using plugin
+              const user = await fastify.getUserDeviceInfo({ userUUID: userUUId, deviceUUID: deviceUUId });
+              if (!user) {
+                  throw new APIError(
+                      'User or device not found',
+                      404,
+                      'USER_OR_DEVICE_NOT_FOUND',
+                      false,
+                      'User or device does not exist or already logged out'
+                  );
+              }
+        
+              const userTokenRepo = fastify.db.getRepository(UserToken);
+        
+              // Invalidate all refresh tokens for this device
+              await userTokenRepo.update(
+                { userId: user.id, deviceId: user.device.id, isActive: true },
+                { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE }
+              );
+
+              // Now safely delete the device
+              await fastify.db.getRepository(UserDevice).remove(user.device);
+        
+              return reply.status(200).send(createSuccessResponse({}, 'Logged out successfully'));
+          } catch (error) {
+              throw new APIError(
+                  (error as APIError).message,
+                  (error as APIError).statusCode || 500,
+                  (error as APIError).code || 'LOGOUT_FAILED',
+                  true,
+                  (error as APIError).publicMessage || 'Failed to logout. Please try again later.'
+              );
+          }
         }
+        
             
         }
     }

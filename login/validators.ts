@@ -50,3 +50,4 @@ export const refreshTokenValidate = {
     }),
     query: Joi.object({}),
 };
+
