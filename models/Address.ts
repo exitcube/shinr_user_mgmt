@@ -28,19 +28,19 @@ export class Address {
     @Column({nullable: true})
     name: string;
 
-    @Column({length: 255 })
+    @Column({length: 255 ,nullable: true})
     addressLine1: string;
 
-    @Column({length: 100 })
+    @Column({length: 100,nullable: true })
     country: string;
 
-    @Column({length: 100 })
+    @Column({length: 100 ,nullable: true})
     city: string;
 
-    @Column({ length: 100 })
+    @Column({ length: 100,nullable: true })
     state: string;
 
-    @Column({length: 20 })
+    @Column({length: 20,nullable: true })
     pinCode: string;
 
     @Column({ type: 'decimal', precision: 10, scale: 5, nullable: false })
@@ -49,12 +49,12 @@ export class Address {
     @Column({ type: 'decimal', precision: 10, scale: 5, nullable: false })
     longitude: number;
 
-    @Column({ default: false })
+    @Column({ default: true })
     isActive: boolean;
 
-    @CreateDateColumn({ type: 'timestamp' })
+    @CreateDateColumn()
     createdAt: Date;
 
-    @UpdateDateColumn({ type: 'timestamp' })
+    @UpdateDateColumn()
     updatedAt: Date;
 }
