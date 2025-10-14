@@ -8,6 +8,7 @@ import { User, UserDevice, UserOtp, UserToken } from '../models';
 import { RefreshTokenStatus } from '../utils/constant';
 import userDevicePlugin from "../plugins/user";
 
+
 export default function controller(fastify: FastifyInstance, opts: FastifyPluginOptions): any {
     return {
         generateOtpHandler: async (request: FastifyRequest<{ Body: LoginRequestBody }>, reply: FastifyReply) => {
@@ -165,7 +166,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 await userTokenRepo.save(userToken);
 
                 const refreshToken = await generateRefreshToken({ userUUId: user.uuid, deviceUUId: user.device.uuid, tokenId: userToken.id });
-                const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid });
+                const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid, tokenId: userToken.id});
                 console.log(refreshToken, accessToken);
                 const refreshTokenExpiry = new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "60") * 24 * 60 * 60 * 1000);
                 userToken.refreshToken = refreshToken;
@@ -350,7 +351,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             await userTokenRepo.save(newTokenRow);
             // new tokens
             const newRefreshToken = await generateRefreshToken({ tokenId: newTokenRow.id, userUUId: user.uuid, deviceUUId: deviceUUId });
-            const newAccessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: deviceUUId });
+            const newAccessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: deviceUUId, tokenId: newTokenRow.id });
 
             // tokens and expiry
             const refreshTokenExpiry = new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '60') * 24 * 60 * 60 * 1000);
@@ -373,9 +374,9 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
         },
         logoutHandler: async (request: FastifyRequest, reply: FastifyReply) => {
           try {
-              const { userUUId, deviceUUId } = (request as any).user;
+              const { userUUId, deviceUUId,tokenId } = (request as any).user;
         
-              // Fetch user + device using plugin
+              
               const user = await fastify.getUserDeviceInfo({ userUUID: userUUId, deviceUUID: deviceUUId });
               if (!user) {
                   throw new APIError(
@@ -389,13 +390,11 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
         
               const userTokenRepo = fastify.db.getRepository(UserToken);
         
-              // Invalidate all refresh tokens for this device
               await userTokenRepo.update(
-                { userId: user.id, deviceId: user.device.id, isActive: true },
+                { id: tokenId,isActive: true },
                 { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE }
               );
-
-              // Now safely delete the device
+     
               await fastify.db.getRepository(UserDevice).remove(user.device);
         
               return reply.status(200).send(createSuccessResponse({}, 'Logged out successfully'));

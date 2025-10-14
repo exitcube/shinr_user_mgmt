@@ -71,5 +71,5 @@ export async function signAccessToken(payload : accessTokenPayloadType) {
 
 export async function verifyAccessToken(token: string) {
   const { payload } = await jwtVerify(token, ACCESS_TOKEN_SECRET, { algorithms: ["HS256"] });
-  return payload as { userId: number; userUUId: string; deviceUUId: string; jti: string};
+  return payload as { userId: number; userUUId: string; deviceUUId: string; jti: string; tokenId: number};
 }
