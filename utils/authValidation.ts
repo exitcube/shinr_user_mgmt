@@ -81,6 +81,7 @@ export async function authValidationPreHandler(
                 userId: payload.userId,
                 userUUId: payload.userUUId,
                 deviceUUId: payload.deviceUUId,
+                tokenId: payload.tokenId,
             };
             (request as any).user = userInfo;
         } catch (jwtError: any) {

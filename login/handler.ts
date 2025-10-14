@@ -1,12 +1,13 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { LoginRequestBody, verifyOtpRequestBody, refreshRequestBody } from './type';
-import { generateOtpToken, generateRefreshToken, signAccessToken, verifyOtpToken, verifyRefreshToken } from '../utils/jwt';
+import { LoginRequestBody, verifyOtpRequestBody, refreshRequestBody} from './type';
+import { generateOtpToken, generateRefreshToken, signAccessToken, verifyOtpToken, verifyRefreshToken, verifyAccessToken } from '../utils/jwt';
 import { generateOtp } from '../utils/helper';
 import { createSuccessResponse } from '../utils/response';
 import { APIError } from '../types/errors';
 import { User, UserDevice, UserOtp, UserToken } from '../models';
 import { RefreshTokenStatus } from '../utils/constant';
 import userDevicePlugin from "../plugins/user";
+
 
 export default function controller(fastify: FastifyInstance, opts: FastifyPluginOptions): any {
     return {
@@ -165,7 +166,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 await userTokenRepo.save(userToken);
 
                 const refreshToken = await generateRefreshToken({ userUUId: user.uuid, deviceUUId: user.device.uuid, tokenId: userToken.id });
-                const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid });
+                const accessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: user.device.uuid, tokenId: userToken.id});
                 console.log(refreshToken, accessToken);
                 const refreshTokenExpiry = new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "60") * 24 * 60 * 60 * 1000);
                 userToken.refreshToken = refreshToken;
@@ -350,7 +351,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
             await userTokenRepo.save(newTokenRow);
             // new tokens
             const newRefreshToken = await generateRefreshToken({ tokenId: newTokenRow.id, userUUId: user.uuid, deviceUUId: deviceUUId });
-            const newAccessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: deviceUUId });
+            const newAccessToken = await signAccessToken({ userId: user.id, userUUId: user.uuid, deviceUUId: deviceUUId, tokenId: newTokenRow.id });
 
             // tokens and expiry
             const refreshTokenExpiry = new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '60') * 24 * 60 * 60 * 1000);
@@ -370,7 +371,44 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
               (error as APIError).publicMessage || 'Failed to refresh token. Please login again.'
             );
           }
+        },
+        logoutHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+          try {
+              const { userUUId, deviceUUId,tokenId } = (request as any).user;
+        
+              
+              const user = await fastify.getUserDeviceInfo({ userUUID: userUUId, deviceUUID: deviceUUId });
+              if (!user) {
+                  throw new APIError(
+                      'User or device not found',
+                      404,
+                      'USER_OR_DEVICE_NOT_FOUND',
+                      false,
+                      'User or device does not exist or already logged out'
+                  );
+              }
+        
+              const userTokenRepo = fastify.db.getRepository(UserToken);
+        
+              await userTokenRepo.update(
+                { id: tokenId,isActive: true },
+                { isActive: false, refreshTokenStatus: RefreshTokenStatus.INACTIVE }
+              );
+     
+              await fastify.db.getRepository(UserDevice).remove(user.device);
+        
+              return reply.status(200).send(createSuccessResponse({}, 'Logged out successfully'));
+          } catch (error) {
+              throw new APIError(
+                  (error as APIError).message,
+                  (error as APIError).statusCode || 500,
+                  (error as APIError).code || 'LOGOUT_FAILED',
+                  true,
+                  (error as APIError).publicMessage || 'Failed to logout. Please try again later.'
+              );
+          }
         }
+        
             
         }
     }
