@@ -1,5 +1,5 @@
 import { Places } from "ola-maps";
-import { AddressComponent, OlaResult, LocationData } from "../types/config";
+import { AddressComponent, OlaResult, LocationData } from "../user/type";
 import { BadRequestError, InternalServerError } from "../types/errors";
 
 let placesClient: Places | null = null;
@@ -23,25 +23,18 @@ function getComponent(components: AddressComponent[], type: string): string {
   return comp ? comp.long_name : "";
 }
 
-export async function getAddress(lat: number, lng: number): Promise<LocationData> {
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
-    throw new BadRequestError(
-      "lat and lng must be valid numbers",
-      "REVERSE_GC_INVALID_COORDS"
-    );
-  }
-
+export async function getAddress(lat: string, lng: string): Promise<LocationData> {
+  
   try {
     const client = getPlacesClient();
     const result = await client.reverse_geocode(lat, lng);
-
     const results: OlaResult[] = result.body.results;
     if (!results || results.length === 0) {
       throw new InternalServerError("No results returned from Ola Maps", "REVERSE_GC_EMPTY");
     }
  
-    const best = results[0];
-    const { address_components = [], formatted_address, name, geometry } = best;
+    const expectedLocation = results[0];
+    const { address_components = [], formatted_address, name, geometry } = expectedLocation;
 
     return {
       name: name || "",

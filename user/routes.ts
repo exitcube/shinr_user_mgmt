@@ -7,7 +7,5 @@ import { reverseGeocodeValidate } from './validators';
 export default async function userRoutes(fastify: FastifyInstance, opts: FastifyPluginOptions) {
 	const handler = controller(fastify, opts);
 
-	fastify.get('/user/details', { preHandler: [authValidationPreHandler] }, handler.getUserDetailsHandler);
-
-    fastify.post('/get-location', { preHandler: [authValidationPreHandler, validation(reverseGeocodeValidate)] }, handler.reverseGeocodeHandler);
+    fastify.post('/get-location/reverse-geocode', { preHandler: [authValidationPreHandler, validation(reverseGeocodeValidate)] }, handler.reverseGeocodeHandler);
 }
