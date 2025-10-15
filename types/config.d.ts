@@ -77,4 +77,7 @@ export interface AuthenticatedUser {
   userUUId: string;
   deviceUUId: string;
   tokenId: number;
+
 }
+
+
