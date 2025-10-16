@@ -55,3 +55,40 @@ export async function getAddress(lat: string, lng: string): Promise<LocationData
     );
   }
 }
+ 
+//
+export async function autoComplete(query: string):Promise<LocationData[]>{
+  const client = getPlacesClient();
+
+  const result = await client.autocomplete(query);
+
+  const predictions = result.body?.predictions?.slice(0, 10).map((item: any) => {
+    const terms = item.terms?.map((t: any) => t.value) || [];
+
+     
+    const name = item.structured_formatting?.main_text || "";
+    const addressLine1 = item.description || "";
+    const latitude = item.geometry?.location?.lat?.toString() || "";
+    const longitude = item.geometry?.location?.lng?.toString() || "";
+
+     
+    const country = terms[terms.length - 1] || "";
+    const pinCode = terms[terms.length - 2] || "";
+    const state = terms[terms.length - 3] || "";
+    const city = terms[terms.length - 4] || "";
+
+    return {
+      name,
+      addressLine1,
+      country,
+      city,
+      state,
+      pinCode,
+      latitude,
+      longitude,
+    };
+  });
+  return predictions
+
+}
+

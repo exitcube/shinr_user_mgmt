@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
 import { createSuccessResponse } from '../utils/response';
-import { getAddress } from '../utils/olaMap';
+import { getAddress, autoComplete } from '../utils/olaMap';
 import { ReverseGeocodeBody, AddAddressBody } from './type';
 import { APIError } from '../types/errors';
 import { UserAddress } from '../models/UserAddress';
@@ -80,7 +80,24 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                      (error as APIError).publicMessage || 'Failed to save address'
                  );
              }
-         }
+         },
+        autoCompleteHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+            try {
+                const { search } = request.query as any;
+                const result = await autoComplete(search);
+                const response = createSuccessResponse({ result }, 'Autocomplete fetched successfully');
+                return reply.status(201).send(response);
+            } catch (error) {
+                throw new APIError(
+                    (error as APIError).message,
+                    (error as APIError).statusCode || 500,
+                    (error as APIError).code || 'AUTOCOMPLETE_FAILED',
+                    true,
+                    (error as APIError).publicMessage || 'Failed to fetch autocomplete suggestions'
+                );
+            }
+
+        }
     };
 }
 
