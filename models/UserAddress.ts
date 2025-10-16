@@ -24,8 +24,11 @@ export class UserAddress {
     @JoinColumn({ name: 'userId' })
     user: User;
 
-    @Column({nullable: true})
+    @Column({ nullable: true})
     name: string;
+
+    @Column({ nullable: true })
+    nickName: string;
 
     @Column({length: 255 ,nullable: true})
     addressLine1: string;

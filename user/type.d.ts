@@ -40,3 +40,16 @@ export interface LocationData {
   latitude: number,
   longitude: number
 }
+
+export type AddAddressBody =
+{
+  nickName?: string;  
+  name: string;
+  addressLine1: string;
+  country: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  latitude: number,
+  longitude: number
+}
