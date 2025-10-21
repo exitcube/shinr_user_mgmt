@@ -30,6 +30,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 );
             }
         },
+
          addAddressHandler: async (request: FastifyRequest<{ Body: AddAddressBody }>, reply: FastifyReply) => {
              try {
                  const { nickName, name, addressLine1, country, city, state, pinCode, latitude, longitude } = request.body;
@@ -102,8 +103,35 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 );
             }
 
-        }
-    };
+        },
+         removeAddressHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+            try {
+                const user = (request as any).user;
+                const { id } = (request.params as any)
+                const addressId = Number(id);
+
+                if (!addressId) {
+                    throw new APIError('Invalid address id', 400, 'INVALID_ADDRESS_ID', true, 'Please provide a valid address id');
+                }
+                const userAddressRepo = fastify.db.getRepository(UserAddress);
+              
+                const result = await userAddressRepo.update({ id: addressId, userId: user.userId }, { isActive: false });
+                if (!result.affected) {
+                    throw new APIError('Address not found', 404, 'ADDRESS_NOT_FOUND', true, 'No address found for this user with the given id');
+                }
+
+                const response = createSuccessResponse({ updated: 1, addressId }, 'Address removed successfully');
+                return reply.status(200).send(response);
+            } catch (error) {
+                throw new APIError(
+                    (error as APIError).message,
+                    (error as APIError).statusCode || 500,
+                    (error as APIError).code || 'ADDRESS_REMOVE_FAILED',
+                    true,
+                    (error as APIError).publicMessage || 'Failed to deactivate address'
+                );
+            }
+    }
 }
 
-
+}
