@@ -57,21 +57,25 @@ export async function getAddress(lat: string, lng: string): Promise<LocationData
 }
  
 //
-export async function autoComplete(query: string):Promise<LocationData[]>{
+export async function autoComplete(query: string, page: number = 1, limit: number = 10): Promise<{ data: LocationData[], total: number, page: number, limit: number }> {
   const client = getPlacesClient();
 
   const result = await client.autocomplete(query);
+  const allPredictions = result.body?.predictions || [];
 
-  const predictions = result.body?.predictions?.slice(0, 10).map((item: any) => {
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedPredictions = allPredictions.slice(startIndex, endIndex);
+
+  const predictions = paginatedPredictions.map((item: any) => {
     const terms = item.terms?.map((t: any) => t.value) || [];
 
-     
     const name = item.structured_formatting?.main_text || "";
     const addressLine1 = item.description || "";
     const latitude = item.geometry?.location?.lat?.toString() || "";
     const longitude = item.geometry?.location?.lng?.toString() || "";
 
-     
     const country = terms[terms.length - 1] || "";
     const pinCode = terms[terms.length - 2] || "";
     const state = terms[terms.length - 3] || "";
@@ -88,7 +92,13 @@ export async function autoComplete(query: string):Promise<LocationData[]>{
       longitude,
     };
   });
-  return predictions
+  const total = allPredictions.length;
 
+  return {
+    data: predictions,
+    total,
+    page,
+    limit,
+  };
 }
 

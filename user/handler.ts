@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { createSuccessResponse } from '../utils/response';
+import { createSuccessResponse,createPaginatedResponse } from '../utils/response';
 import { getAddress, autoComplete } from '../utils/olaMap';
 import { ReverseGeocodeBody, AddAddressBody } from './type';
 import { APIError } from '../types/errors';
@@ -83,10 +83,15 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
          },
         autoCompleteHandler: async (request: FastifyRequest, reply: FastifyReply) => {
             try {
-                const { search } = request.query as any;
-                const result = await autoComplete(search);
-                const response = createSuccessResponse({ result }, 'Autocomplete fetched successfully');
-                return reply.status(201).send(response);
+                const { search, page = 1, limit = 10 } = request.query as any;
+                const result = await autoComplete(search, parseInt(page), parseInt(limit));
+                const response = createPaginatedResponse(
+                    result.data,
+                    result.total,
+                    result.page,
+                    result.limit
+                );
+                return reply.status(200).send(response);
             } catch (error) {
                 throw new APIError(
                     (error as APIError).message,

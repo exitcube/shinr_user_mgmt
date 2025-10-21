@@ -17,3 +17,16 @@ export const reverseGeocodeValidate = {
   }),
 };
 
+export const  autoSearchingValidate = {
+  query: Joi.object({
+      search: Joi.string()
+        .min(3) // minimum 3 characters
+        .required()
+        .messages({
+          "string.base": " must be a string",
+          "string.empty": " cannot be empty",
+          "string.min": "must be at least 3 characters long",
+          "any.required": "search is required"
+        }),
+    }),
+};
