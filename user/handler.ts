@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { createSuccessResponse } from '../utils/response';
-import { getAddress } from '../utils/olaMap';
+import { createSuccessResponse,createPaginatedResponse } from '../utils/response';
+import { getAddress, autoComplete } from '../utils/olaMap';
 import { ReverseGeocodeBody, AddAddressBody } from './type';
 import { APIError } from '../types/errors';
 import { UserAddress } from '../models/UserAddress';
@@ -82,8 +82,29 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                  );
              }
          },
+        autoCompleteHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+            try {
+                const { search, page = 1, limit = 10 } = request.query as any;
+                const result = await autoComplete(search, parseInt(page), parseInt(limit));
+                const response = createPaginatedResponse(
+                    result.data,
+                    result.total,
+                    result.page,
+                    result.limit
+                );
+                return reply.status(200).send(response);
+            } catch (error) {
+                throw new APIError(
+                    (error as APIError).message,
+                    (error as APIError).statusCode || 500,
+                    (error as APIError).code || 'AUTOCOMPLETE_FAILED',
+                    true,
+                    (error as APIError).publicMessage || 'Failed to fetch autocomplete suggestions'
+                );
+            }
 
-        removeAddressHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+        },
+         removeAddressHandler: async (request: FastifyRequest, reply: FastifyReply) => {
             try {
                 const user = (request as any).user;
                 const { id } = (request.params as any)
@@ -110,8 +131,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     (error as APIError).publicMessage || 'Failed to deactivate address'
                 );
             }
-        }
-    };
+    }
 }
 
-
+}
