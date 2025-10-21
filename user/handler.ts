@@ -139,7 +139,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 );
             }
         },
-         SelectAddressHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+        SelectAddressHandler: async (request: FastifyRequest, reply: FastifyReply) => {
             try {
                 const { id } = (request.params as any)
                 const addressId = Number(id);
@@ -147,27 +147,27 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                 if (!addressId) {
                     throw new APIError('Invalid address id', 400, 'INVALID_ADDRESS_ID', true, 'Please provide a valid address id');
                 }
-                 const userAddressRepo = fastify.db.getRepository(UserAddress);
-                 const userId = (request as any).user?.userId;
+                const userAddressRepo = fastify.db.getRepository(UserAddress);
+                const userId = (request as any).user?.userId;
 
-                  
-                 const result = await userAddressRepo.findOne({ where: { id: addressId, userId, isActive: true } });
+
+                const result = await userAddressRepo.findOne({ where: { id: addressId, userId, isActive: true } });
                 if (!result) {
                     throw new APIError('Address not found', 404, 'ADDRESS_NOT_FOUND', true, 'No address found for this user with the given id');
                 }
 
-                const response = createSuccessResponse({ selected: 1, addressId }, 'Address selected successfully');
+                const response = createSuccessResponse({ selected:1, addressId ,address:result }, 'Address selected successfully');
                 return reply.status(200).send(response);
             } catch (error) {
                 throw new APIError(
                     (error as APIError).message,
                     (error as APIError).statusCode || 500,
-                     (error as APIError).code || 'ADDRESS_SELECTION_FAILED',
+                    (error as APIError).code || 'ADDRESS_SELECTION_FAILED',
                     true,
-                     (error as APIError).publicMessage || 'Failed to select address'
+                    (error as APIError).publicMessage || 'Failed to select address'
                 );
             }
+        }
     }
-}
 
 }
