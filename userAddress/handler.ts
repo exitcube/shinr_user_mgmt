@@ -36,9 +36,14 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                  const { nickName, name, addressLine1, country, city, state, pinCode, latitude, longitude } = request.body;
                   
                  const userAddressRepo = fastify.db.getRepository(UserAddress);
-               
+                 const userId = (request as any).user.userId;
+
+                  
+                 const existingActiveAddresses = await userAddressRepo.count({ where: { userId, isActive: true } });
+                 const isDefault = existingActiveAddresses === 0;
+
                  const newAddress = userAddressRepo.create({
-                     userId: (request as any).user.userId,
+                    userId: userId,
                      nickName: nickName ,
                      name: name,
                      addressLine1: addressLine1,
@@ -48,7 +53,8 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                      pinCode: pinCode,
                      latitude: latitude,
                      longitude: longitude,
-                     isActive: true
+                    isActive: true,
+                    isDefault: isDefault
                  });
                  
                  const savedAddress = await userAddressRepo.save(newAddress);
@@ -57,6 +63,7 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                      { 
                          addressId: savedAddress.id,
                          nickName: savedAddress.nickName,
+                         isDefault: savedAddress.isDefault,
                          address: {
                              name: savedAddress.name,
                              addressLine1: savedAddress.addressLine1,
@@ -131,7 +138,36 @@ export default function controller(fastify: FastifyInstance, opts: FastifyPlugin
                     (error as APIError).publicMessage || 'Failed to deactivate address'
                 );
             }
+        },
+        selectAddressHandler: async (request: FastifyRequest, reply: FastifyReply) => {
+            try {
+                const { id } = (request.params as any)
+                const addressId = Number(id);
+
+                if (!addressId) {
+                    throw new APIError('Invalid address id', 400, 'INVALID_ADDRESS_ID', true, 'Please provide a valid address id');
+                }
+                const userAddressRepo = fastify.db.getRepository(UserAddress);
+                const userId = (request as any).user?.userId;
+
+
+                const result = await userAddressRepo.findOne({ where: { id: addressId, userId, isActive: true } });
+                if (!result) {
+                    throw new APIError('Address not found', 404, 'ADDRESS_NOT_FOUND', true, 'No address found for this user with the given id');
+                }
+
+                const response = createSuccessResponse({ selected:1, addressId ,address:result }, 'Address selected successfully');
+                return reply.status(200).send(response);
+            } catch (error) {
+                throw new APIError(
+                    (error as APIError).message,
+                    (error as APIError).statusCode || 500,
+                    (error as APIError).code || 'ADDRESS_SELECTION_FAILED',
+                    true,
+                    (error as APIError).publicMessage || 'Failed to select address'
+                );
+            }
+        }
     }
-}
 
 }
