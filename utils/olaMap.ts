@@ -1,5 +1,5 @@
 import { Places } from "ola-maps";
-import { AddressComponent, OlaResult, LocationData } from "../user/type";
+import { AddressComponent, OlaResult, LocationData } from "../userAddress/type";
 import { BadRequestError, InternalServerError } from "../types/errors";
 
 let placesClient: Places | null = null;
