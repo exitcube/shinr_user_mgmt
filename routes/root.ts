@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import loginRoutes from '../login/routes';
-import userRoutes from '../user/routes';
+import userRoutes from '../userAddress/routes';
 
 export default async function routes(
   fastify: FastifyInstance,
